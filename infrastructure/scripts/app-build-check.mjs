@@ -5,7 +5,7 @@ const files = readdirSync('out/assets').filter(f => f.endsWith('.js'));
 let total = 0;
 for (const file of files) {
   const source = readFileSync(`out/assets/${file}`);
-  if (/__XELRA_DEV_SWITCHER__|DEV_ROLE_SWITCHER_MARKER|sb_secret_|BEGIN PRIVATE KEY|@xelra\.test/.test(source.toString())) throw Error('Unsafe development or credential content in build');
+  if (/__XELRA_DEV_SWITCHER__|DEV_ROLE_SWITCHER_MARKER|sb_secret_[A-Za-z0-9_-]{20,}|BEGIN PRIVATE KEY|@xelra\.test/.test(source.toString())) throw Error('Unsafe development or credential content in build');
   total += gzipSync(source).length;
 }
 if (total > 250 * 1024) throw Error(`JavaScript budget exceeded: ${total} bytes gzip`);

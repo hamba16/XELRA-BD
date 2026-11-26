@@ -30,7 +30,7 @@ export function generate(directory, env = process.env) {
       const privilegedJwt = [...text.matchAll(/eyJ[A-Za-z0-9_-]+\.([A-Za-z0-9_-]+)\.[A-Za-z0-9_-]+/g)].some(m => {
         try { return JSON.parse(Buffer.from(m[1], 'base64url')).role === 'service_role'; } catch { return false; }
       });
-      if (privilegedJwt || /__XELRA_DEV_SWITCHER__|DEV_ROLE_SWITCHER_MARKER|sb_secret_|BEGIN PRIVATE KEY/.test(text))
+      if (privilegedJwt || /__XELRA_DEV_SWITCHER__|DEV_ROLE_SWITCHER_MARKER|sb_secret_[A-Za-z0-9_-]{20,}|BEGIN PRIVATE KEY/.test(text))
         throw new Error('Development switcher or privileged credential marker in output');
     }
   }

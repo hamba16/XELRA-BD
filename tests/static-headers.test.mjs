@@ -32,8 +32,9 @@ test('rejects inline handlers and remote scripts', t => {
 test('rejects missing config, placeholders, development and secret markers', t => {
   for (const value of [undefined, 'https://example.supabase.co', 'https://ok.test/path', 'http://ok.test'])
     assert.throws(() => origin(value));
-  for (const marker of ['DEV_ROLE_SWITCHER_MARKER', 'sb_secret_test'])
+  for (const marker of ['DEV_ROLE_SWITCHER_MARKER', 'sb_secret_123456789012345678901234567890'])
     assert.throws(() => generate(fixture(t, `<script>${marker}</script>`), env));
+  assert.doesNotThrow(() => generate(fixture(t, '<script>const secretPrefix="sb_secret_"</script>'), env));
 });
 test('rejects header overflow instead of silently losing CSP on standby', t => {
   const html = Array.from({length: 50}, (_, i) => `<script>self.n=${i}</script>`).join('');
