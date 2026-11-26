@@ -1488,7 +1488,7 @@ The plan fixes dependency order and leaves timing to the build owner. I have kep
 ## 12. The lab: run it, break it, learn from it
 
 ```
-cd xelra-lab
+cd packages/lab
 npm install
 npm test                 # 61 database tests, plus 5 more groups of tests and experiments
 npm run typecheck        # every TypeScript and TSX file

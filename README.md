@@ -9,7 +9,9 @@ npm ci --ignore-scripts
 npm run dev
 ```
 
-Open `http://127.0.0.1:3000`. Without backend configuration, development offers a labelled sample walkthrough. It is excluded from production builds. Sample records live in memory; pending field reports use a separate IndexedDB store per profile.
+Open `http://127.0.0.1:3000`. Without backend configuration, development offers a labelled sample walkthrough. It is excluded from production builds. The optional local profile switcher uses VITE_DEV_LOGIN and VITE_DEV_PROFILES from the ignored development environment. Sample records live in memory; pending field reports use a separate IndexedDB store per profile.
+
+Local development also supports a single-click profile switcher configured in the ignored `.env.development.local` file. It uses synthetic, in-memory records only: it does not sign in to Supabase, impersonate real users, or access live data. The profile list is sent to the browser, so use fake identities and never put credentials or secrets in it. Set `VITE_DEV_LOGIN=false` or remove the local development settings to return to the normal sign-in flow. The development switcher is unavailable in production builds; live Supabase access continues to require authentication and RLS.
 
 For the real backend, copy `.env.example` to `.env`, supply the public Supabase connection and authenticated file Worker origin, apply migrations to the intended environment, and provision invited identities and matching `org.people` records. The app never provisions accounts automatically. Hosted sign-in, RLS and integration acceptance remain required.
 

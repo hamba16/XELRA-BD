@@ -12,6 +12,12 @@ bucket_name = "xelra-documents"
 [[r2_buckets]]
 binding = "BACKUPS"
 bucket_name = "xelra-backups"
-# Set APP_ORIGIN, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY as vars in deployment.
-# Set SUPABASE_SECRET_KEY, ALERT_WEBHOOK and ALERT_SECRET using wrangler secret.
-# Add the approved Worker custom domain; no automatic DNS or live deploy.
+routes = [
+  { pattern = "files.dreniak.com", custom_domain = true }
+]
+
+[vars]
+MAIL_ENABLED = "false"
+APP_ORIGIN = "https://xelra-eight.vercel.app"
+SUPABASE_URL = "https://flxzdexhke.supabase.co"
+SUPABASE_PUBLISHABLE_KEY = "sb_publishable_..."

@@ -49,6 +49,16 @@ test('actual migrations: scope, API privileges, inactive approvers and idempoten
  await as(ids.other,async()=>await assert.rejects(()=>rows("select api.sync_field_report('77777777-7777-7777-7777-777777777777','P014','{}',now())"),/cannot submit/));
  await as(ids.admin,async()=>{assert.equal((await rows('select * from api.projects')).length,0);await assert.rejects(()=>rows('select * from hr.pay'),/permission denied/);});
  assert.equal((await rows('select * from audit.verify()'))[0].ok,true);
+ await db.exec('set role service_role');
+ const claimed=await rows('select * from api.claim_notifications()');
+ assert.ok(claimed.length>0,'committed approval notifications can be claimed');
+ await rows('select api.finish_notification($1,$2,true)',[claimed[0].id,'00000000-0000-0000-0000-000000000000']);
+ await db.exec('reset role');
+ assert.equal((await rows('select sent_at from notifications.outbox where id=$1',[claimed[0].id]))[0].sent_at,null,'wrong lease cannot acknowledge delivery');
+ await db.exec('set role service_role');
+ await rows('select api.finish_notification($1,$2,true)',[claimed[0].id,claimed[0].lease]);
+ await db.exec('reset role');
+ assert.ok((await rows('select sent_at from notifications.outbox where id=$1',[claimed[0].id]))[0].sent_at,'valid lease acknowledges delivery');
  assert.equal((await rows("select count(*)::int n from pg_tables where schemaname in ('org','rbac','hr','fin','approvals','audit','docs','payroll','work','notifications') and not rowsecurity"))[0].n,0);
  await db.exec('set role anon');await assert.rejects(()=>rows('select api.profile()'),/permission denied/);await db.exec('reset role');
  for(const f of readdirSync('supabase/tests').sort())await db.exec(readFileSync(`supabase/tests/${f}`,'utf8'));
