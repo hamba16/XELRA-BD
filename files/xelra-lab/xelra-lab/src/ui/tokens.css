@@ -1,0 +1,44 @@
+/* XELRA design tokens. Brand values come from Dreniak's guideline and the DreniakSite repo;
+   tints are generated in OKLab from the two brand colours; contrast ratios were computed, see blueprint section 9.3. */
+:root {
+  /* brand */
+  --red-900:#53090f; --red-500:#991923; --red-400:#c97c77; --red-300:#e1b0ac; --red-200:#f1d7d5; --red-50:#f9edec;
+  --indigo-900:#041729; --indigo-500:#0d3251; --indigo-400:#697e94; --indigo-300:#a2b0be; --indigo-200:#d0d7de; --indigo-50:#eaedf0;
+  /* neutrals */
+  --ink:#111111; --paper:#f7f7f5; --surface:#ffffff; --night:#080808; --raised:#141414;
+  --text:#111111; --text-muted:#5a5a58;          /* 6.4:1 on paper */
+  --hairline:#dcdcd9;                            /* decoration only, never the only cue */
+  --control-border:#767671;                      /* 4.3:1 on paper, passes the 3:1 rule for inputs */
+  /* status: never the division colours, always paired with an icon and a word */
+  --ok:#1f6f4a; --warn:#8a5300; --danger:#a3201c; --info:#2f6a9e;
+  /* lens: the identity colour of whatever division you are looking at (default: combined = ink) */
+  --lens:var(--ink); --lens-text:var(--ink); --lens-soft:#ecece9; --lens-on:#ffffff;
+  /* type: modular scale 1.2 from 14px */
+  --font-sans:"Sweet Sans Pro","General Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono","IBM Plex Mono",ui-monospace,monospace;
+  --t-12:.75rem; --t-14:.875rem; --t-17:1.05rem; --t-20:1.26rem; --t-24:1.51rem; --t-29:1.81rem; --t-35:2.18rem; --t-42:2.61rem;
+  /* space on a 4px grid */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+  /* shape: square by default, one rounded corner is the signature (the arc of the mark) */
+  --r-0:0; --r-1:2px; --corner-d:0 0 28px 0;
+  /* motion: ease-out only, no bounce */
+  --ease:cubic-bezier(.2,.7,.1,1); --d1:120ms; --d2:200ms; --d3:320ms;
+}
+[data-lens="eng"] { --lens:var(--red-500);    --lens-text:var(--red-500);    --lens-soft:var(--red-50);    --lens-on:#ffffff; }
+[data-lens="amg"] { --lens:var(--indigo-500); --lens-text:var(--indigo-500); --lens-soft:var(--indigo-50); --lens-on:#ffffff; }
+
+[data-theme="dark"] {
+  --text:#f7f7f5; --text-muted:#a3a3a0; --surface:var(--raised); --paper:var(--night);
+  --hairline:#2a2a28; --control-border:#80807b;
+  --ok:#5bbf8f; --warn:#e0a458; --danger:#ef8a85; --info:#7fb2e0;
+  --lens:var(--paper); --lens-text:var(--paper); --lens-soft:#1d1d1c; --lens-on:#111111;
+}
+/* brand red and indigo fail as text on near-black (2.4:1 and 1.5:1), so dark mode uses their lighter tints */
+[data-theme="dark"][data-lens="eng"] { --lens:var(--red-400);    --lens-text:var(--red-300);    --lens-soft:#2a1315; --lens-on:#111111; }
+[data-theme="dark"][data-lens="amg"] { --lens:var(--indigo-400); --lens-text:var(--indigo-300); --lens-soft:#101c28; --lens-on:#ffffff; }
+
+:focus-visible { outline:2px solid var(--text); outline-offset:2px; }   /* one focus ring for every lens */
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+body { background:var(--paper); color:var(--text); font-family:var(--font-sans); font-variant-numeric:tabular-nums; }
+h1,h2,h3 { font-weight:500; letter-spacing:-.045em; line-height:1.08; }
+.doc-no { font-family:var(--font-mono); font-size:var(--t-12); letter-spacing:.02em; }

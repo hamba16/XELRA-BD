@@ -1,0 +1,42 @@
+name: capacity-meters
+on:
+  schedule:
+    - cron: '45 4 * * *'
+  workflow_dispatch:
+    inputs:
+      hosting_credits_used:
+        description: 'Current month usage from Netlify billing; leave blank to skip'
+        type: string
+        required: false
+permissions:
+  contents: read
+jobs:
+  meters:
+    if: vars.INFRA_OPERATIONS_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    environment: operations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_METER_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_METER_SECRET_ACCESS_KEY }}
+      RCLONE_CONFIG_R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+      R2_BUCKETS: ${{ vars.R2_BUCKETS }}
+      R2_CAPACITY_BYTES: ${{ vars.R2_CAPACITY_BYTES }}
+      HOSTING_CAPACITY_CREDITS: ${{ vars.HOSTING_CAPACITY_CREDITS }}
+      HOSTING_CREDITS_USED: ${{ inputs.hosting_credits_used }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: sudo apt-get update -q && sudo apt-get install -y rclone
+      - name: Measure all private buckets using read-only credentials
+        run: python infrastructure/scripts/r2-meter.py
+      - name: Record operator-verified hosting credits
+        if: inputs.hosting_credits_used != ''
+        run: node infrastructure/scripts/ops.mjs meter hosting_credits "$HOSTING_CREDITS_USED" "$HOSTING_CAPACITY_CREDITS"

@@ -1,0 +1,7 @@
+supabase_organization_id = "replace-with-organisation-slug"
+supabase_region          = "eu-west-1"
+cloudflare_account_id    = "replace-with-account-id"
+netlify_site_id          = "replace-with-bootstrap-site-id"
+name_prefix              = "xelra"
+app_hostname             = "xelra.dreniak.com"
+# Password and provider tokens are environment variables, never tfvars.

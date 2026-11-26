@@ -1,0 +1,43 @@
+name: monthly-restore-drill
+on:
+  schedule:
+    - cron: '0 3 1 * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  restore:
+    if: vars.INFRA_OPERATIONS_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    environment: recovery
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      R2_BACKUP_BUCKET: ${{ vars.R2_BACKUP_BUCKET }}
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_RESTORE_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_RESTORE_SECRET_ACCESS_KEY }}
+      RCLONE_CONFIG_R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+      AGE_SECRET_KEY: ${{ secrets.AGE_SECRET_KEY }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      RESTORE_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      RESTORE_ACK: DISPOSABLE_LOCAL_DATABASE_ONLY
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1
+        with:
+          version: '2.109.1'
+      - run: bash infrastructure/scripts/install-recovery-tools.sh
+      - run: supabase start
+      - name: Disable scheduled jobs before restoring untrusted production scheduling data
+        run: |
+          docker exec supabase_db_xelra psql -U postgres -c "ALTER SYSTEM SET cron.launch_active_jobs = off"
+          docker exec supabase_db_xelra psql -U postgres -c 'SELECT pg_reload_conf()'
+      - run: bash infrastructure/scripts/restore.sh
+      - if: always()
+        run: supabase stop --no-backup

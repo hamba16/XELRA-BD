@@ -1,0 +1,35 @@
+name: nightly-backup
+on:
+  schedule:
+    - cron: '17 21 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: database-backup
+  cancel-in-progress: false
+jobs:
+  backup:
+    if: vars.INFRA_OPERATIONS_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    environment: operations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+      AGE_PUBLIC_KEYS: ${{ vars.AGE_PUBLIC_KEYS }}
+      R2_BACKUP_BUCKET: ${{ vars.R2_BACKUP_BUCKET }}
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_BACKUP_ACCESS_KEY_ID }}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_BACKUP_SECRET_ACCESS_KEY }}
+      RCLONE_CONFIG_R2_ENDPOINT: ${{ vars.R2_ENDPOINT }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: bash infrastructure/scripts/install-recovery-tools.sh
+      - run: bash infrastructure/scripts/backup.sh

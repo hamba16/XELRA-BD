@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { registry, visible, rank } from '../src/ui/commands.ts';
+const staff = visible(registry, p => false);
+assert.ok(!staff.some(c => c.id === 'new.payrun') && !staff.some(c => c.id === 'adm.users'), 'staff never see payroll or admin commands');
+const fm = visible(registry, p => p === 'payroll.prepare');
+assert.ok(fm.some(c => c.id === 'new.payrun'));
+assert.equal(rank(staff, 'leav')[0].id, 'new.leave');
+assert.equal(rank(staff, 'holiday')[0].id, 'new.leave', 'keyword match');
+assert.equal(rank(staff, 'zzz').length, 0);
+console.log('commands: 5/5 passed');

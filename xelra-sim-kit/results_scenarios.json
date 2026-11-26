@@ -1,0 +1,196 @@
+{
+ "S1_storage": {
+  "no_compression": {
+   "month_crosses_10GB_p10": 8,
+   "p50": 8,
+   "p90": 8,
+   "mean_monthly_cost_usd_at_month": {
+    "12": 0.1,
+    "24": 0.55,
+    "36": 1.39
+   },
+   "gb_at_month_12_p50": 16.9,
+   "gb_at_month_36_p50": 102.5
+  },
+  "photos_compressed_on_device": {
+   "month_crosses_10GB_p10": 15,
+   "p50": 16,
+   "p90": 16,
+   "mean_monthly_cost_usd_at_month": {
+    "12": 0.0,
+    "24": 0.14,
+    "36": 0.48
+   },
+   "gb_at_month_12_p50": 7.6,
+   "gb_at_month_36_p50": 41.8
+  }
+ },
+ "S2_database": {
+  "no_pruning": {
+   "month_hits_400MB_p10": 8,
+   "p50": 10,
+   "p90": 11,
+   "mb_at_month_12_p50": 534,
+   "mb_at_month_36_p50": 2137
+  },
+  "prune_and_archive": {
+   "month_hits_400MB_p10": 14,
+   "p50": 16,
+   "p90": 17,
+   "mb_at_month_12_p50": 315,
+   "mb_at_month_36_p50": 1161
+  }
+ },
+ "S3_netlify_credits_per_month": {
+  "20_users_ssr": {
+   "p50": 174,
+   "p90": 212,
+   "share_of_months_over_300": 0.002
+  },
+  "20_users_static_first": {
+   "p50": 94,
+   "p90": 94,
+   "share_of_months_over_300": 0.0
+  },
+  "52_users_ssr": {
+   "p50": 306,
+   "p90": 409,
+   "share_of_months_over_300": 0.541
+  },
+  "52_users_static_first": {
+   "p50": 100,
+   "p90": 100,
+   "share_of_months_over_300": 0.0
+  },
+  "124_users_ssr": {
+   "p50": 605,
+   "p90": 844,
+   "share_of_months_over_300": 0.999
+  },
+  "124_users_static_first": {
+   "p50": 113,
+   "p90": 113,
+   "share_of_months_over_300": 0.0
+  },
+  "deploy_budget": {
+   "credits_per_prod_deploy": 15,
+   "max_prod_deploys_if_nothing_else_used": 20
+  }
+ },
+ "S3b_supabase_egress_gb_per_month": {
+  "52_users": {
+   "p50": 1.2,
+   "p90": 1.76
+  },
+  "124_users": {
+   "p50": 2.86,
+   "p90": 4.17
+  }
+ },
+ "S4_offline_sync": {
+  "last_write_wins_record": {
+   "lost_updates_per_1000_edits": 89.0,
+   "manual_resolutions_per_1000_edits": 0.0
+  },
+  "field_level_merge": {
+   "lost_updates_per_1000_edits": 30.6,
+   "manual_resolutions_per_1000_edits": 0.0
+  },
+  "event_log_with_rules": {
+   "lost_updates_per_1000_edits": 0.0,
+   "manual_resolutions_per_1000_edits": 9.6
+  }
+ },
+ "S5_approvals": {
+  "no_fallback": {
+   "p50_days": 0.89,
+   "p90_days": 1.96,
+   "over_5_days_pct": 3.43
+  },
+  "delegate_and_2_day_escalation": {
+   "p50_days": 0.9,
+   "p90_days": 2.15,
+   "over_5_days_pct": 0.07
+  }
+ },
+ "S6_payroll_shape": {
+  "cases": 20000,
+  "violations": 0,
+  "max_rounding_residual_ugx": 0,
+  "note": "bands are illustrative placeholders for engine testing only"
+ },
+ "S7_contrast": {
+  "ink on paper": 17.6,
+  "muted on paper": 5.52,
+  "red on paper": 7.78,
+  "indigo on paper": 12.3,
+  "white on red": 8.34,
+  "white on indigo": 13.19,
+  "red on white": 8.34,
+  "line on paper (non-text, need 3)": 1.28,
+  "dark mode: paper on #080808": 18.67,
+  "dark mode: muted-light #a8a8a8 on #080808": 8.42,
+  "dark mode: red-tint #e8838b on #080808": 7.68,
+  "dark mode: indigo-tint #7fa6cc on #080808": 7.85
+ },
+ "S7_ramps": {
+  "red": {
+   "tint92": {
+    "hex": "#f7eded",
+    "ink_on_it": 16.45
+   },
+   "tint84": {
+    "hex": "#efdadc",
+    "ink_on_it": 14.15
+   },
+   "tint72": {
+    "hex": "#e2bfc1",
+    "ink_on_it": 11.2
+   },
+   "tint55": {
+    "hex": "#d1989c",
+    "ink_on_it": 7.81
+   },
+   "shade": {
+    "hex": "#73131a",
+    "white_on_it": 11.43
+   }
+  },
+  "indigo": {
+   "tint92": {
+    "hex": "#eceff1",
+    "ink_on_it": 16.35
+   },
+   "tint84": {
+    "hex": "#d8dee3",
+    "ink_on_it": 13.92
+   },
+   "tint72": {
+    "hex": "#bbc6ce",
+    "ink_on_it": 10.86
+   },
+   "tint55": {
+    "hex": "#92a3b1",
+    "ink_on_it": 7.28
+   },
+   "shade": {
+    "hex": "#0a263d",
+    "white_on_it": 15.47
+   }
+  }
+ },
+ "S7_auditor_badge_palette_white_text_AA": [
+  "#ca4949",
+  "#a2692f",
+  "#777722",
+  "#548226",
+  "#278627",
+  "#278657",
+  "#268282",
+  "#3678ba",
+  "#6161d1",
+  "#9459cf",
+  "#c238c2",
+  "#c84185"
+ ]
+}

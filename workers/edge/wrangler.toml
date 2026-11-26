@@ -1,0 +1,17 @@
+name = "xelra-edge"
+main = "index.mjs"
+compatibility_date = "2026-11-26"
+workers_dev = false
+[triggers]
+crons = ["17 */12 * * *", "*/5 * * * *"]
+[vars]
+MAIL_ENABLED = "false"
+[[r2_buckets]]
+binding = "DOCS"
+bucket_name = "xelra-documents"
+[[r2_buckets]]
+binding = "BACKUPS"
+bucket_name = "xelra-backups"
+# Set APP_ORIGIN, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY as vars in deployment.
+# Set SUPABASE_SECRET_KEY, ALERT_WEBHOOK and ALERT_SECRET using wrangler secret.
+# Add the approved Worker custom domain; no automatic DNS or live deploy.

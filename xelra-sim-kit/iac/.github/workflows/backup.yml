@@ -1,0 +1,38 @@
+name: nightly-backup
+on:
+  schedule: [{ cron: "30 22 * * *" }]   # 22:30 UTC = 01:30 East Africa Time
+  workflow_dispatch:
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Install client tools
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q postgresql-client age rclone
+      - name: Dump, encrypt, upload
+        env:
+          DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          AGE_PUBLIC_KEY: ${{ vars.AGE_PUBLIC_KEY }}
+          RCLONE_CONFIG_R2_TYPE: s3
+          RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+          RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          RCLONE_CONFIG_R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+        run: |
+          set -euo pipefail
+          STAMP=$(date -u +%Y%m%dT%H%MZ)
+          pg_dump --no-owner --no-privileges --format=custom "$DATABASE_URL" | age -r "$AGE_PUBLIC_KEY" > "xelra-$STAMP.dump.age"
+          test "$(stat -c%s xelra-$STAMP.dump.age)" -gt 10000   # an empty dump must fail the job
+          rclone copyto "xelra-$STAMP.dump.age" "r2:xelra-backups/db/xelra-$STAMP.dump.age"
+          rclone delete r2:xelra-backups/db --min-age 35d
+          echo "backup=$STAMP" >> "$GITHUB_STEP_SUMMARY"
+  heartbeat:
+    needs: dump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record success so the health console can alarm on silence
+        run: |
+          curl -fsS -X POST "${{ secrets.SUPABASE_URL }}/rest/v1/rpc/record_heartbeat" \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
+            -H "Content-Type: application/json" -d '{"p_kind":"backup"}'

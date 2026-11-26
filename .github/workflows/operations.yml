@@ -1,0 +1,32 @@
+name: operations-monitor
+on:
+  schedule:
+    - cron: '15 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  monitor:
+    if: vars.INFRA_OPERATIONS_ENABLED == 'true' && github.ref == 'refs/heads/main'
+    environment: operations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      APP_URL: ${{ vars.APP_URL }}
+      DATABASE_CAPACITY_BYTES: ${{ vars.DATABASE_CAPACITY_BYTES }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      # An hourly database call also supplies keepalive; it does not prove the app is healthy.
+      - run: node infrastructure/scripts/ops.mjs heartbeat keepalive
+      - run: node infrastructure/scripts/ops.mjs database
+      - name: Check shell without masking database alarms
+        if: vars.APP_RELEASE_ENABLED == 'true'
+        run: curl --fail --silent --show-error --max-time 30 --proto '=https' "$APP_URL" -o /dev/null
+      - if: always()
+        run: node infrastructure/scripts/ops.mjs check

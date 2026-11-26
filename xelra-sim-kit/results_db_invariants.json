@@ -1,0 +1,58 @@
+{
+  "T1_division_isolation": {
+    "violations": 0,
+    "positive_controls": {
+      "eng_sees": 3,
+      "central_director_sees": 6
+    }
+  },
+  "T2_salary_isolation": {
+    "violations": 0,
+    "positive_controls": {
+      "employee_sees_own": 1,
+      "finance_manager_sees": 4
+    }
+  },
+  "T3_segregation_and_ladder": {
+    "violations": 0,
+    "positive_controls": {
+      "director_approves_in_limit": true,
+      "delegate_approves_within_cap": true
+    }
+  },
+  "T4_audit_append_only": {
+    "violations": 0
+  },
+  "T7_payroll_lock": {
+    "violations": 0,
+    "positive_controls": {
+      "draft_editable": true
+    }
+  },
+  "T6_purge_requires_verified_export": {
+    "violations": 0,
+    "positive_controls": {
+      "purged": 200,
+      "rows_kept_outside_range": 1
+    }
+  },
+  "T8_rls_performance_300k_rows": {
+    "violations": 0,
+    "per_row_function_ms": 1756.9,
+    "set_based_policy_ms": 39.5,
+    "speedup": 44.5
+  },
+  "T5_numbering_concurrency": {
+    "violations": 0,
+    "allocations_committed": 1068,
+    "duplicates": 0,
+    "gaps": 0,
+    "errors": 0,
+    "seconds": 0.51,
+    "threads": 8
+  },
+  "RESULT": {
+    "total_violations": 0,
+    "certified": true
+  }
+}

@@ -1,0 +1,85 @@
+name: static-release
+on:
+  push:
+    tags: ['release-*']
+permissions:
+  contents: read
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+jobs:
+  checks:
+    if: vars.APP_RELEASE_ENABLED == 'true'
+    uses: ./.github/workflows/ci.yml
+  build:
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+      VITE_FILES_ORIGIN: ${{ vars.FILES_ORIGIN }}
+      VITE_APP_ORIGIN: ${{ vars.APP_URL }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Release must come from main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      # Both hosts receive this exact, checked Vite bundle.
+      - run: npm run build && npm run infra:headers
+      - name: Stamp the single bundle
+        run: |
+          printf '%s\n' "$GITHUB_SHA" > out/release.txt
+          node infrastructure/scripts/release-manifest.mjs create
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: static-release
+          path: |
+            out
+            release-manifest.json
+          retention-days: 35
+          include-hidden-files: true
+          if-no-files-found: error
+  deploy:
+    needs: build
+    environment: production
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      NETLIFY_TOKEN: ${{ secrets.NETLIFY_TOKEN }}
+      NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PAGES_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_PROJECT: ${{ vars.CLOUDFLARE_PROJECT }}
+      FALLBACK_URL: ${{ vars.FALLBACK_URL }}
+      APP_URL: ${{ vars.APP_URL }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: static-release
+      - run: node infrastructure/scripts/release-manifest.mjs verify
+      - name: Publish Cloudflare primary
+        run: npx --yes wrangler@4.50.0 pages deploy out --project-name "$CLOUDFLARE_PROJECT" --branch main
+      - name: Accept primary content, security headers, caching and 404 behaviour
+        run: node infrastructure/scripts/verify-host.mjs "$APP_URL"
+      - name: Verify uploader has not changed the bundle
+        run: node infrastructure/scripts/release-manifest.mjs verify
+      - name: Check fallback budget
+        if: vars.NETLIFY_FALLBACK_ENABLED == 'true'
+        run: python infrastructure/scripts/netlify-release.py check
+      - name: Publish batched Netlify fallback
+        if: vars.NETLIFY_FALLBACK_ENABLED == 'true'
+        run: python infrastructure/scripts/netlify-release.py deploy
+      - name: Accept fallback content and headers
+        if: vars.NETLIFY_FALLBACK_ENABLED == 'true'
+        run: node infrastructure/scripts/verify-host.mjs "$FALLBACK_URL"

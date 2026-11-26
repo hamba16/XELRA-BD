@@ -1,0 +1,172 @@
+[
+  {
+    "path": "files/lens-states.png",
+    "bytes": 54783,
+    "sha256": "13988ce16732591d4a190c37176ec16dd600d1ba4767c037b12de516546ec653"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/.github/workflows/backup.yml",
+    "bytes": 1954,
+    "sha256": "0f929285d1dceb07647def35d98b89e2a7fdf7df30b662a23fd72bc9eee9520b"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/assets/lens-states.png",
+    "bytes": 49013,
+    "sha256": "34ea898934da14c362164803e9e41f97a9d43e606d15a5f94ffa8367679d48f5"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/assets/lens-states.svg",
+    "bytes": 15111,
+    "sha256": "2aab3d5f593cb7af12b3d885cfde65e0677489a38dbafb36f0fac8d3270408e8"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/bench/rls-bench.mjs",
+    "bytes": 3688,
+    "sha256": "dd46b32b14112ccf3ace3cbea03cffa3f10ff90ff213398ddfe9ef462a9880f7"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/package.json",
+    "bytes": 1042,
+    "sha256": "93a543a5bd3fdd31b0b7759e238a0a517514fb83abacd1e6a892d8f5117793f1"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/README.md",
+    "bytes": 533,
+    "sha256": "b069765d297a1fa8c26993cdcb13dcb20650ad2aeea48628935f0dc6e712b32b"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/sim/palette.py",
+    "bytes": 2839,
+    "sha256": "0713189af9d41779dfc247c096c3258a2722ab971c752265edc6adc8b5a271da"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/sim/sim.py",
+    "bytes": 9473,
+    "sha256": "ffde044da64a8e02f17aec7caab52ff55faa2b45b5dae3c2c8a2dc491050b016"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/sim/sim2.py",
+    "bytes": 3121,
+    "sha256": "348a4035293d6e8465ed2e7487177c1f75ec6032234412159c0e55bee6ecf738"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/sql/core.sql",
+    "bytes": 24740,
+    "sha256": "dff1cb348d85e8c4b60c8ecd90dbdaf111491ce45694dd60fb35a6eaa99ea96e"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/lib/dev-token.ts",
+    "bytes": 1447,
+    "sha256": "2a873b265537813e88de16a735cf7baa3ee4f2f17032554866eb6c6d67ba46dd"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/lib/offline-queue.ts",
+    "bytes": 2162,
+    "sha256": "dfba446482ea3fdc3e6921f77a41e7d2230a798120ff13f61c81fa0dbb8dfc2b"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/lib/quiet-time.ts",
+    "bytes": 1107,
+    "sha256": "078be8c37a09bf65173d351eae3ec830ef68f7c5ac6f380b69ed19008be50eb1"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/lib/recon.ts",
+    "bytes": 2237,
+    "sha256": "d474b999516e7fdc3cf1996882c68d18eeda86726c340b8ceed92d233a855871"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/ui/ApprovalCard.tsx",
+    "bytes": 3745,
+    "sha256": "bb0fa1de6381b7aebb77d2d76205357456147e46ab75102e9d04c355de583ccb"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/ui/commands.ts",
+    "bytes": 2396,
+    "sha256": "49681e9d114d0a4d9882984e7e1f758440c383a3d266bde6f498420bd20b2874"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/ui/LensSwitcher.tsx",
+    "bytes": 3741,
+    "sha256": "4881a1b170a713cdd860eb0f8b40df6b3b43f534329de4aa9bec0163c9f55c48"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/ui/mark.ts",
+    "bytes": 1630,
+    "sha256": "7084d7433ddab94650ed086528ecf2877c8ff0c974c2d303ffb2bafb19bc43a1"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/ui/tokens.css",
+    "bytes": 3374,
+    "sha256": "076b433ec1b2ff767d1921f49a8bd5ff2d437097759717534ba0380e1fbfe8a1"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/worker/files-proxy.mjs",
+    "bytes": 1091,
+    "sha256": "47dec91329ed7c4e9231a5fa2dc2f73a9ae12450d5ab7156b38b946a9b520d67"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/src/worker/ops-cron.mjs",
+    "bytes": 3336,
+    "sha256": "6b364abe3b7f2198024f7757eea1840754d3f0ad89b7585b9937076f1e43b188"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/tests/commands.test.ts",
+    "bytes": 607,
+    "sha256": "fe6c9fba2720846c91d58e647e662e05f7661ab28020bacb7091465fdba9f01d"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/tests/dev-token.test.ts",
+    "bytes": 752,
+    "sha256": "f40b76aea49da88b66855869a5e19b0309265b6eec0c5839810df273505ea8d5"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/tests/offline-queue.test.ts",
+    "bytes": 2278,
+    "sha256": "8c174bac53c22d8018e0feb1e478127388a55b0452da3d5f23ca1b9daad7bec1"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/tests/ops-cron.test.mjs",
+    "bytes": 1131,
+    "sha256": "21338349facda06625a3ae5754a046516f24fa8f955b01c9547edb1c6d9956b2"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/tests/quiet-time.test.ts",
+    "bytes": 972,
+    "sha256": "b889dec1414d4143590d0386e9708224aa1f5a7e1178ca151e5ef230c0fd8160"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/tests/recon-sweep.ts",
+    "bytes": 1939,
+    "sha256": "6cf1bf56fe51a0584e25523b4ad9f756d2be614b68708d620a341d9a95250cd6"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/tests/recon.test.ts",
+    "bytes": 2092,
+    "sha256": "ece243be2d60ae3c8d34cf73dc37cc57afed1a3151ad02d36f6289e63f127c84"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/tests/render-mark.tsx",
+    "bytes": 979,
+    "sha256": "f9c310dc1934d393cde4d3623813eba46c40f41d4bb5fcd59d565f30a3a888cf"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/tests/rls.test.mjs",
+    "bytes": 18790,
+    "sha256": "1948a190b47ea478b855beb17eb3b05ef09584e7a2a782da87a69ceae850458d"
+  },
+  {
+    "path": "files/xelra-lab/xelra-lab/tsconfig.json",
+    "bytes": 281,
+    "sha256": "83fd4dbc70032473650cc06ef83ab0327777ea73d09496fbd580c564b66dcd1f"
+  },
+  {
+    "path": "files/xelra-lab.zip",
+    "bytes": 94226,
+    "sha256": "44e07533beba4b1839a723e3f56747fd89cd8f73b1505f36808ba31ce8d55706"
+  },
+  {
+    "path": "files/XELRA_Blueprint.md",
+    "bytes": 121862,
+    "sha256": "97eea42adfcd96ca4cd5e845fe0793ec0b190b5ad7ebba2955969645f3ba6933"
+  }
+]

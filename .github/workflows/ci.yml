@@ -1,0 +1,56 @@
+name: foundation-ci
+on:
+  workflow_call:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: foundation-ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Enforce forward-only migration history
+        if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        env:
+          MIGRATION_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python infrastructure/scripts/migration-history.py --base "$MIGRATION_BASE"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test && npm run infra:check && npm run typecheck && npm run build
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        with:
+          terraform_version: '1.14.0'
+      - run: terraform -chdir=infrastructure/terraform fmt -check
+      - run: terraform -chdir=infrastructure/terraform init -backend=false -input=false -lockfile=readonly
+      - run: terraform -chdir=infrastructure/terraform validate
+      - run: terraform -chdir=infrastructure/github fmt -check
+      - run: terraform -chdir=infrastructure/github init -backend=false -input=false -lockfile=readonly
+      - run: terraform -chdir=infrastructure/github validate
+      - run: for script in infrastructure/scripts/*.sh; do bash -n "$script"; done
+  database:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1
+        with:
+          version: '2.109.1'
+      - run: supabase start
+      - name: Test actual foundation migrations and access boundaries
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: python tests/run-database.py
+      - run: supabase db lint --local --level warning --fail-on warning
+      - if: always()
+        run: supabase stop --no-backup

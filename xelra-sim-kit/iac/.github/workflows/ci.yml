@@ -1,0 +1,29 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck && npm run lint && npm test
+      - name: Database invariants (real Postgres, must report zero violations)
+        run: |
+          pip install pgserver "psycopg[binary]"
+          python tests/db_invariants.py | tee invariants.json
+          python -c "import json,sys; sys.exit(0 if json.load(open('invariants.json'))['RESULT']['certified'] else 1)"
+      - run: npm run build
+      - run: node scripts/csp-hashes.mjs out
+      - name: Dev role switcher must not ship
+        run: "! grep -R --include='*.js' -l 'DEV_ROLE_SWITCHER_MARKER' out"
+      - uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }

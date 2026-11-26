@@ -1,0 +1,33 @@
+{
+  "name": "xelra-lab",
+  "version": "1.0.0",
+  "description": "Executable evidence for the XELRA blueprint",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests/rls.test.mjs && node tests/ops-cron.test.mjs && tsx tests/quiet-time.test.ts && tsx tests/dev-token.test.ts && tsx tests/commands.test.ts && tsx tests/offline-queue.test.ts && tsx tests/recon.test.ts",
+    "typecheck": "tsc -p .",
+    "bench": "node bench/rls-bench.mjs",
+    "sim": "python3 sim/sim.py && python3 sim/sim2.py",
+    "palette": "python3 sim/palette.py",
+    "sweep": "tsx tests/recon-sweep.ts",
+    "render-lens": "tsx tests/render-mark.tsx"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@electric-sql/pglite": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.10",
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "esbuild": "^0.28.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "type": "module",
+  "private": true
+}
