@@ -40,9 +40,9 @@ export function LensSwitcher({ value, onChange, canSee }: { value: Lens; onChang
       <SplitMark lens={value} canSee={canSee} />
       {options.filter(o => o.enabled).length > 1 && options.map(o => (
         <button key={o.key} role="radio" aria-checked={value === o.key} disabled={!o.enabled}
+          className="lens-option"
           title={o.enabled ? undefined : 'You do not have access to this view.'}
-          onClick={() => onChange(o.key)}
-          style={{ background: value === o.key ? 'var(--lens)' : 'transparent', color: value === o.key ? 'var(--lens-on)' : 'var(--text)', border: '1px solid var(--control-border)', padding: '6px 12px', font: 'inherit', fontSize: 'var(--t-14)', opacity: o.enabled ? 1 : .4 }}>
+          onClick={() => onChange(o.key)}>
           {o.label}
         </button>
       ))}

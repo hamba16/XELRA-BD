@@ -51,7 +51,7 @@ export function ApprovalCard({ a, onDecide }: { a: Approval; onDecide: (id: stri
         </div>
       ) : (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button onClick={() => go(true)} disabled={busy !== null} style={{ background: 'var(--text)', color: 'var(--paper)', padding: '8px 16px', border: 0 }}>
+          <button className="primary" onClick={() => go(true)} disabled={busy !== null}>
             {busy === 'approve' ? 'Approving' : 'Approve'}
           </button>
           <button onClick={() => setRejecting(true)} disabled={busy !== null}>Send back</button>

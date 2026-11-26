@@ -1,7 +1,7 @@
 # XELRA Blueprint: infrastructure, backend, UI and UX
 
 Prepared for the XELRA build owner, VAIS Applied Intelligence Systems, for Dreniak Limited.
-Version 1.1, integrated workspace edition, 26 November 2026. Companion to the XELRA Master Plan v1.0 (25 November 2026).
+Version 1.2, integrated workspace edition, 26 November 2026. Companion to the XELRA Master Plan v1.0 (25 November 2026).
 Delivery deadline, fixed: end of January 2027.
 
 > **Workspace integration authority.** This edition adopts `files/XELRA_Blueprint.md` over the earlier root blueprint. The original source is unchanged; the previous blueprint is preserved in `docs/source/XELRA_BLUEPRINT.previous.md`. See [implementation and acceptance record](docs/IMPLEMENTATION.md) for what is implemented and locally tested versus planned or dependent on external setup. The source author's research, legal/tax interpretations and historical evidence tags below are not new verification by this workspace integration. Statutory tables remain unseeded in production and require Finance verification.
@@ -544,6 +544,8 @@ The Engineering Pro-Consultant can approve for Engineering when Engineering mana
 ## 6. Backend designs by module
 
 ### 6.1 The approval engine
+
+> **Implemented batch, 26 November 2026.** Owner withdrawal, scoped request details/steps/timeline, hashed decision reasons, paginated saved history views, and privacy-preserving stuck-request visibility are now implemented. See [the approval lifecycle acceptance record](docs/batches/approval-lifecycle.md). This does not complete the remaining purchasing or bulk-approval/undo workflows, and is not a hosted-deployment claim.
 
 ```mermaid
 stateDiagram-v2

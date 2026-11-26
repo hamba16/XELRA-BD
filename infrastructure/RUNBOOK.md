@@ -15,7 +15,7 @@ Create separate bucket-scoped R2 state access keys. Export them as `AWS_ACCESS_K
 3. Set `NETLIFY_TOKEN`, `NETLIFY_ACCOUNT_SLUG`, `NETLIFY_SITE_NAME`. Run `node infrastructure/scripts/bootstrap-netlify.mjs` to inspect the create/no-op result; append `--apply` to create the empty site. Capture the returned site ID. The official provider configures existing sites and cannot create one. No Git auto-deployment connection is attached.
 4. Copy `production.tfvars.example` to ignored `production.tfvars` and replace every placeholder. Export `SUPABASE_ACCESS_TOKEN`, `CLOUDFLARE_API_TOKEN`, `NETLIFY_TOKEN` and `TF_VAR_database_password`. Account management tokens never become build variables.
 5. Run `terraform -chdir=infrastructure/terraform init -backend-config=PATH_TO_BACKEND_FILE`, then `terraform -chdir=infrastructure/terraform plan -var-file=production.tfvars -out=production.tfplan`. Review the exact resource changes. Apply that saved plan with `terraform -chdir=infrastructure/terraform apply production.tfplan`. Do not use destroy; deletion protection exists on the project and data buckets.
-6. Verify the hosted PostgreSQL major version. Align local config and backup/restore client versions before proceeding. Review `supabase link --help` and `supabase db push --help`; link only the Terraform-created project, run `supabase db push --linked --dry-run`, review the four migrations (including the enhanced application spine), then apply with `supabase db push --linked`. Never run a database reset against hosted production.
+6. Verify the hosted PostgreSQL major version. Align local config and backup/restore client versions before proceeding. Review `supabase link --help` and `supabase db push --help`; link only the Terraform-created project, run `supabase db push --linked --dry-run`, review all migrations (including the enhanced spine, approval lifecycle and decision evidence), then apply with `supabase db push --linked`. Never run a database reset against hosted production.
 7. Verify hosted grants and anonymous/authenticated denials; run `supabase db advisors --help` and the supported advisor command. The rollback-only SQL tests in `supabase/tests` are for disposable staging, not live health checks: they briefly modify telemetry and create probe objects.
 8. Configure DNS manually: the `xelra.dreniak.com` CNAME initially points to the Cloudflare Pages project, TTL 300 where supported. Complete Netlify TLS and Cloudflare Pages custom-domain validation. Do not call standby ready until a real cutover/rollback drill proves TLS, redirects, CORS and cache behaviour. No DNS record is changed by Terraform.
 
@@ -112,3 +112,12 @@ The legacy Terraform resource address/name `cloudflare_pages_project.standby` is
 The full roadmap and unimplemented business workflows are listed explicitly in `docs/IMPLEMENTATION.md`. No source or local test should be reported as hosted execution.
 
 Current documentation consulted for implementation: Supabase custom schemas, Azure sign-in and sessions; Vite getting started; Cloudflare Pages serving routes; Microsoft Graph sendMail. Recheck entitlements and configuration at provisioning.
+
+
+## Approval lifecycle batch
+
+Apply `20261126121521_approval_lifecycle.sql` before `20261126122932_approval_decision_evidence.sql`, after the existing spine. The UI uses `api.request_page`, `api.request_detail`, `api.withdraw_request` and `api.approval_attention`; deploy migrations before the updated frontend. None accepts a caller-supplied person identifier as authority.
+
+To verify on a machine with native PostgreSQL tools, run `python tests/approval-race.py`. It creates its own disposable loopback cluster on a free port, applies all migrations, proves both terminal-action race orderings and stops that cluster. It does not accept an existing database URL. Normal `npm test` runs the policy regression suites sequentially to keep WebAssembly memory bounded. Browser checks run separately with `npm run test:browser`.
+
+New reasons are captured in audit events. Older events are preserved and use their existing step comments as a compatibility fallback. Withdrawal cancels undelivered queued reminders; an in-flight external message may already have been accepted, but it contains only the inbox link.

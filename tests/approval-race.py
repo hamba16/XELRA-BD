@@ -29,6 +29,12 @@ with socket.socket() as sock:
     PORT = sock.getsockname()[1]
 
 def run(args, check=True, timeout=60):
+    # Windows background postgres can inherit PIPE handles from pg_ctl. Use a
+    # file for this launcher so subprocess.communicate cannot wait on the server.
+    if args[0] == BIN['pg_ctl']:
+        with (FOLDER / 'control.log').open('a', encoding='utf-8') as log:
+            return subprocess.run(args, text=True, stdout=log, stderr=log,
+                                  check=check, timeout=timeout, creationflags=HIDDEN)
     return subprocess.run(args, text=True, capture_output=True, check=check,
                           timeout=timeout, creationflags=HIDDEN)
 

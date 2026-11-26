@@ -16,8 +16,8 @@ The full enhanced blueprint replaces the shorter root blueprint. Earlier documen
 | 4.4 · backups | Consistent dump/read-back verification, two recipients, daily/weekly/monthly tiers; restored audit verification | No live encrypted backup/restore or bucket lifecycle execution |
 | 4.5 · scheduling | GitHub monitoring plus independent Cloudflare monitor, paginated backup checks, meter/receipt checks, alert webhook | Worker and alert endpoint deployment |
 | 5 · identity/RLS | Invited OAuth/OTP UI, sessionStorage/PKCE, short tokens, current permissions, active/expiry checks, IT business-data wall | Tenant MFA, real OTP delivery, step-up/provisioning/session-admin workflows |
-| 6.1 · approvals | Submit/decide, row lock, manager/permission steps, four-eyes, delegation expiry, reason validation, next approver, transactional notifications | Full purchasing rules, cancellation, bulk-safe approval/undo |
-| 6.2 · documents | Numbering, metadata/4 KB excerpt cap, scoped search/copy/download, caller-token Worker | Upload, revision release flow and reviewed legacy auto-filing |
+| 6.1 · approvals | Submit/decide/withdraw, shared row lock, manager/permission steps, four-eyes, delegation expiry, hashed decision reasons, scoped audit timeline, paginated saved views, orphan alerts and transactional notifications | Full purchasing rules and bulk-safe approval/undo |
+| 6.2 · documents | Numbering, metadata/4 KB excerpt cap, scoped lifecycle create/attach/submit/release/revise/withdraw, scoped search/copy/download, caller-token Worker | R2 upload transport, reviewed legacy auto-filing and SharePoint filing |
 | 6.3 · notifications | Transactional outbox, SKIP LOCKED leases, token-bound completion, quiet time, link-only Graph mail, retries | Disabled until tenant/mailbox setup; auth-email hook still needed. Delivery may duplicate after ambiguous provider failures |
 | 6.4 · audit | Append-only chain, canonical structured hashing, verification, private writes, restore invariant | External anchors and verified monthly archival/pruning not implemented |
 | 6.5 · attendance | Export/checksum/confirm/purge primitives, 12-month floor, exact exported IDs protect later backdated arrivals | Admin UI and attendance event capture |
@@ -49,3 +49,18 @@ The supplied blueprint describes a multi-phase platform beyond the executable la
 Needed externally: provider/account access and region, Microsoft consent/mailbox/MFA settings, DNS/TLS, two backup recipients/recovery key, hosted migrations/RLS acceptance, physical mobile testing, font licence, Finance-verified rates, legal transfer/privacy decisions, accounting/payment choices, legacy document corpus and anonymised payroll shadow inputs.
 
 The workspace has no Git repository; no commit or push was performed. No cloud deployment, production migration, external message or DNS change was made.
+
+
+## Completed batch: approval lifecycle
+
+See [batch acceptance record](batches/approval-lifecycle.md). Requesters can withdraw pending requests, including after an intermediate approval; previous decisions remain visible. Request details expose only authorised steps/events. New decision reasons are included in the hash chain, with a compatibility fallback for older step comments. No old audit event is rewritten.
+
+History has server-side status/view/division filters, 50-row pages, per-profile saved preferences and keyboard navigation. Stuck requests are visible within business access scopes; IT receives aggregate counts only. Unsent notifications and leases are invalidated on withdrawal; mail already accepted by an external provider cannot be recalled.
+
+The current workspace now has a Git repository. This batch preserved existing work and did not create commits or push. Original Files inputs and earlier migrations remain unchanged; two forward migrations implement this batch.
+
+## Completed batch: document lifecycle
+
+See [batch acceptance record](batches/document-lifecycle.md). Forward-only metadata transitions now cover draft creation, private-file attachment, review submission, release, revision and withdrawal. SQL checks ownership and division/permission scope, requires SHA-256 for release, and records every lifecycle event in the hash chain.
+
+The synthetic document centre provides create and lifecycle controls. This batch does not upload objects to R2 or claim hosted file delivery, legacy migration, SharePoint filing or external document acceptance.

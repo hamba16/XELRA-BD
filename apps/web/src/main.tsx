@@ -523,6 +523,61 @@ function App() {
         admin: "Administration",
       } as Record<string, string>
     )[page] || "Page not found";
+  const dashboardActions: {
+    label: string;
+    description: string;
+    icon: string;
+    run: () => void;
+  }[] = [];
+  if (data.profile.principal === "staff") {
+    dashboardActions.push(
+      {
+        label: "New field report",
+        description: "Capture a note from the field",
+        icon: "▧",
+        run: () => nav("capture"),
+      },
+      {
+        label: "Request leave",
+        description: "Record time away from work",
+        icon: "◷",
+        run: () => setForm("leave"),
+      },
+      {
+        label: "Claim expense",
+        description: "Submit an expense for review",
+        icon: "▤",
+        run: () => setForm("expense"),
+      },
+      {
+        label: "Raise requisition",
+        description: "Request a purchase",
+        icon: "＋",
+        run: () => setForm("requisition"),
+      },
+    );
+  } else {
+    if (projects.length)
+      dashboardActions.push({
+        label: "View projects",
+        description: "Open your project register",
+        icon: "▦",
+        run: () => nav("projects"),
+      });
+    if (documents.length)
+      dashboardActions.push({
+        label: "Open documents",
+        description: "Browse released documents",
+        icon: "▤",
+        run: () => nav("documents"),
+      });
+    dashboardActions.push({
+      label: "Ask IT for help",
+      description: "Open the helpdesk",
+      icon: "?",
+      run: () => nav("help"),
+    });
+  }
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const node = e.currentTarget;
@@ -669,8 +724,16 @@ function App() {
           </div>
         </header>
         <main id="main" tabIndex={-1}>
-          <div className="page-heading">
-            <div>
+          <div className={`page-heading${page === "inbox" ? " dashboard-hero" : ""}`}>
+            {page === "inbox" && (
+              <img
+                className="dashboard-hero-image"
+                src="/ag-rosa-render.webp"
+                alt=""
+                aria-hidden="true"
+              />
+            )}
+            <div className="page-heading-copy">
               <p className="eyebrow">
                 {lens === "combined"
                   ? "DRENIAK WORKSPACE"
@@ -688,11 +751,6 @@ function App() {
               </p>
             </div>
             <div className="actions">
-              {page === "inbox" && data.profile.principal === "staff" && (
-                <button className="primary" onClick={() => setForm("leave")}>
-                  Request leave
-                </button>
-              )}
               {page === "help" && (
                 <button className="primary" onClick={() => setForm("helpdesk")}>
                   Ask IT for help
@@ -853,54 +911,77 @@ function App() {
           {page === "inbox" && (
             <>
               <section className="summary">
-                <div>
-                  <p>Projects in view</p>
-                  <strong>{projects.length}</strong>
-                  <small>Authorised project register</small>
+                <div className="summary-card">
+                  <span className="summary-icon" aria-hidden="true">▦</span>
+                  <div>
+                    <p>Projects in view</p>
+                    <strong>{projects.length}</strong>
+                    <small>Authorised project register</small>
+                  </div>
                 </div>
-                <div>
-                  <p>Waiting on you</p>
-                  <strong>{pending.length.toString().padStart(2, "0")}</strong>
-                  <small>Decisions ready to make</small>
+                <div className="summary-card">
+                  <span className="summary-icon" aria-hidden="true">◷</span>
+                  <div>
+                    <p>Waiting on you</p>
+                    <strong>{pending.length}</strong>
+                    <small>Decisions ready to make</small>
+                  </div>
                 </div>
-                <div>
-                  <p>Your open requests</p>
-                  <strong>
-                    {requests
-                      .filter(
-                        (r) =>
-                          r.requester === data.profile.id &&
-                          r.status === "pending",
-                      )
-                      .length.toString()
-                      .padStart(2, "0")}
-                  </strong>
-                  <small>Follow progress below</small>
+                <div className="summary-card">
+                  <span className="summary-icon" aria-hidden="true">□</span>
+                  <div>
+                    <p>Your open requests</p>
+                    <strong>
+                      {
+                        requests.filter(
+                          (r) =>
+                            r.requester === data.profile.id &&
+                            r.status === "pending",
+                        ).length
+                      }
+                    </strong>
+                    <small>Follow progress below</small>
+                  </div>
                 </div>
-                <div>
-                  <p>Field queue</p>
-                  <strong>{queueCount.toString().padStart(2, "0")}</strong>
-                  <small>
-                    {queueCount
-                      ? "Saved on this device"
-                      : "Nothing waiting to sync"}
-                  </small>
+                <div className="summary-card">
+                  <span className="summary-icon" aria-hidden="true">↥</span>
+                  <div>
+                    <p>Field queue</p>
+                    <strong>{queueCount}</strong>
+                    <small>
+                      {queueCount
+                        ? "Saved on this device"
+                        : "Nothing waiting to sync"}
+                    </small>
+                  </div>
+                </div>
+              </section>
+              <section className="dashboard-quick-actions" aria-labelledby="quick-actions-heading">
+                <h2 id="quick-actions-heading">Quick actions</h2>
+                <div className="quick-action-grid">
+                  {dashboardActions.map((action) => {
+                    return (
+                      <button
+                        className="quick-action"
+                        key={action.label}
+                        onClick={action.run}
+                      >
+                        <span className="quick-action-icon" aria-hidden="true">
+                          {action.icon}
+                        </span>
+                        <span>
+                          <strong>{action.label}</strong>
+                          <small>{action.description}</small>
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
               <div className="section-heading">
                 <h2>
                   Waiting on you <span>{pending.length}</span>
                 </h2>
-                {data.profile.principal === "staff" && (
-                  <div className="actions">
-                    <button onClick={() => setForm("expense")}>
-                      Claim expense
-                    </button>
-                    <button onClick={() => setForm("requisition")}>
-                      Raise requisition
-                    </button>
-                  </div>
-                )}
               </div>
               <div className="approval-list">
                 {pending.length ? (
@@ -946,8 +1027,15 @@ function App() {
                   />
                 )}
               </div>
-              <RequestWorkspace key={`${data.profile.id}-${lens}`} backend={backend} data={data}
-                division={lens === 'combined' ? null : lens === 'eng' ? 'ENG' : 'AMG'} onChanged={() => refresh()} />
+              <RequestWorkspace
+                key={`${data.profile.id}-${lens}`}
+                backend={backend}
+                data={data}
+                division={
+                  lens === "combined" ? null : lens === "eng" ? "ENG" : "AMG"
+                }
+                onChanged={() => refresh()}
+              />
             </>
           )}
           {page === "projects" && (
@@ -997,6 +1085,74 @@ function App() {
           )}
           {page === "documents" && (
             <>
+              {can("documents.create") && (
+                <form
+                  className="form-panel"
+                >
+                  <h3>Create document draft</h3>
+                  <div className="form-grid">
+                    <label>
+                      Division
+                      <select name="division" defaultValue={lens === "eng" ? "ENG" : lens === "amg" ? "AMG" : "COR"}>
+                        <option value="ENG">Engineering</option>
+                        <option value="AMG">Asset Management</option>
+                        <option value="COR">Corporate</option>
+                      </select>
+                    </label>
+                    <label>
+                      Project
+                      <input name="project" placeholder="P014 or CORP" />
+                    </label>
+                    <label>
+                      Document type
+                      <select name="type">
+                        <option value="RPT">Report</option>
+                        <option value="DWG">Drawing</option>
+                        <option value="LTR">Letter</option>
+                        <option value="CTR">Contract</option>
+                        <option value="QTN">Quotation</option>
+                        <option value="PO">Purchase order</option>
+                        <option value="INV">Invoice</option>
+                        <option value="MIN">Minutes</option>
+                        <option value="POL">Policy</option>
+                      </select>
+                    </label>
+                    <label>
+                      Title
+                      <input name="title" required maxLength={200} />
+                    </label>
+                    <label className="span">
+                      Excerpt
+                      <textarea name="excerpt" maxLength={4096} />
+                    </label>
+                  </div>
+                  <button
+                    type="submit"
+                    onClick={async (event) => {
+                      event.preventDefault();
+                      const form = event.currentTarget.form;
+                      if (!form || !backend) return;
+                      const values = new FormData(form);
+                      try {
+                        await backend.rpc("create_document", {
+                          p_division: String(values.get("division")),
+                          p_project: String(values.get("project") || "CORP"),
+                          p_type: String(values.get("type")),
+                          p_title: String(values.get("title")),
+                          p_excerpt: String(values.get("excerpt") || ""),
+                        });
+                        form.reset();
+                        setMessage("Document draft created.");
+                        await refresh(backend);
+                      } catch (e) {
+                        setError((e as Error).message);
+                      }
+                    }}
+                  >
+                    Create draft
+                  </button>
+                </form>
+              )}
               <label className="filter">
                 Find by number or title
                 <input
@@ -1048,15 +1204,116 @@ function App() {
                           <Status value={d.status} />
                         </td>
                         <td>
-                          <button
-                            onClick={() =>
-                              void downloadFile(d.id).catch((e) =>
-                                setError(e.message),
-                              )
-                            }
-                          >
-                            Download
-                          </button>
+                          <div className="action-stack">
+                            {d.status === "released" && (
+                              <button
+                                onClick={() =>
+                                  void downloadFile(d.id).catch((e) =>
+                                    setError(e.message),
+                                  )
+                                }
+                              >
+                                Download
+                              </button>
+                            )}
+                            {d.can_manage && d.status === "draft" && (
+                              <>
+                                <button
+                                  onClick={async () => {
+                                    if (!backend) return;
+                                    const key = window.prompt("Private R2 object key");
+                                    const sha = window.prompt("SHA-256 checksum");
+                                    if (!key || !sha) return;
+                                    try {
+                                      await backend.rpc("attach_document", {
+                                        p_id: d.id,
+                                        p_object_key: key,
+                                        p_sha256: sha,
+                                      });
+                                      setMessage("Document file attached.");
+                                      await refresh(backend);
+                                    } catch (e) {
+                                      setError((e as Error).message);
+                                    }
+                                  }}
+                                >
+                                  Attach file
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (!backend) return;
+                                    try {
+                                      await backend.rpc("submit_document", {
+                                        p_id: d.id,
+                                      });
+                                      setMessage("Document submitted for review.");
+                                      await refresh(backend);
+                                    } catch (e) {
+                                      setError((e as Error).message);
+                                    }
+                                  }}
+                                >
+                                  Submit for review
+                                </button>
+                              </>
+                            )}
+                            {d.can_release && d.status === "in_review" && (
+                              <button
+                                onClick={async () => {
+                                  if (!backend) return;
+                                  try {
+                                    await backend.rpc("release_document", {
+                                      p_id: d.id,
+                                    });
+                                    setMessage("Document released.");
+                                    await refresh(backend);
+                                  } catch (e) {
+                                    setError((e as Error).message);
+                                  }
+                                }}
+                              >
+                                Release
+                              </button>
+                            )}
+                            {d.can_manage && d.status === "released" && (
+                              <button
+                                onClick={async () => {
+                                  if (!backend) return;
+                                  try {
+                                    await backend.rpc(
+                                      "create_document_revision",
+                                      { p_id: d.id },
+                                    );
+                                    setMessage("Document revision created.");
+                                    await refresh(backend);
+                                  } catch (e) {
+                                    setError((e as Error).message);
+                                  }
+                                }}
+                              >
+                                Create revision
+                              </button>
+                            )}
+                            {d.can_manage &&
+                              ["draft", "in_review"].includes(d.status) && (
+                                <button
+                                  onClick={async () => {
+                                    if (!backend) return;
+                                    try {
+                                      await backend.rpc("withdraw_document", {
+                                        p_id: d.id,
+                                      });
+                                      setMessage("Document withdrawn.");
+                                      await refresh(backend);
+                                    } catch (e) {
+                                      setError((e as Error).message);
+                                    }
+                                  }}
+                                >
+                                  Withdraw
+                                </button>
+                              )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1225,8 +1482,18 @@ function App() {
           </footer>
         </main>
         <nav className="mobile-nav">
-          <button onClick={() => nav("inbox")}>Inbox</button>
-          <button onClick={() => nav("capture")}>Capture</button>
+          <button
+            aria-current={page === "inbox" ? "page" : undefined}
+            onClick={() => nav("inbox")}
+          >
+            Inbox
+          </button>
+          <button
+            aria-current={page === "capture" ? "page" : undefined}
+            onClick={() => nav("capture")}
+          >
+            Capture
+          </button>
           <button onClick={() => setPalette(true)}>Find</button>
           <button onClick={() => void signOut()}>Sign out</button>
         </nav>

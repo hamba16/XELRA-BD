@@ -14,7 +14,12 @@ export interface RequestRow {
   requester: string;
   requester_name: string;
   amount_ugx?: number;
-  payload: { title: string; description?: string; starts?: string; ends?: string };
+  payload: {
+    title: string;
+    description?: string;
+    starts?: string;
+    ends?: string;
+  };
   status: string;
   current_step: number;
   steps: number;
@@ -23,13 +28,36 @@ export interface RequestRow {
   created_at: string;
   orphaned?: boolean;
 }
-export interface RequestPage { items: RequestRow[]; has_more: boolean; offset: number }
+export interface RequestPage {
+  items: RequestRow[];
+  has_more: boolean;
+  offset: number;
+}
 export interface RequestDetail {
   request: RequestRow & { can_withdraw: boolean };
-  steps: { number: number; type: string; permission: string | null; status: string; decided_by: string | null; decided_at: string | null; comment: string | null }[];
-  timeline: { seq: number; at: string; actor: string; action: string; step: number | null; result: string | null; reason: string | null }[];
+  steps: {
+    number: number;
+    type: string;
+    permission: string | null;
+    status: string;
+    decided_by: string | null;
+    decided_at: string | null;
+    comment: string | null;
+  }[];
+  timeline: {
+    seq: number;
+    at: string;
+    actor: string;
+    action: string;
+    step: number | null;
+    result: string | null;
+    reason: string | null;
+  }[];
 }
-export interface ApprovalAttention { orphaned_count: number; technical_only: boolean }
+export interface ApprovalAttention {
+  orphaned_count: number;
+  technical_only: boolean;
+}
 export interface Project {
   code: string;
   title: string;
@@ -46,6 +74,9 @@ export interface DocumentRow {
   project: string;
   revision: number;
   status: string;
+  can_manage?: boolean;
+  can_release?: boolean;
+  has_file?: boolean;
 }
 export interface RecordRow {
   id: string;
@@ -129,7 +160,14 @@ export const live: Backend = {
       profile,
       requests: await checked(requests),
       projects: await checked(projects),
-      documents: await checked(documents),
+      documents: ((await checked(documents)) as DocumentRow[]).map((document) => ({
+        ...document,
+        can_manage:
+          profile.permissions.includes("documents.manage") ||
+          document.status === "draft",
+        can_release: profile.permissions.includes("documents.release"),
+        has_file: false,
+      })),
       people: await checked(people),
       records: await checked(records),
     };
