@@ -2,10 +2,15 @@ import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import {createHash} from 'node:crypto';
 import { gzipSync } from 'node:zlib';
 const files = readdirSync('out/assets').filter(f => f.endsWith('.js'));
+const previewBuild = process.env.VERCEL_ENV === 'preview';
 let total = 0;
 for (const file of files) {
   const source = readFileSync(`out/assets/${file}`);
-  if (/__XELRA_DEV_SWITCHER__|DEV_ROLE_SWITCHER_MARKER|sb_secret_[A-Za-z0-9_-]{20,}|BEGIN PRIVATE KEY|@xelra\.test/.test(source.toString())) throw Error('Unsafe development or credential content in build');
+  const text = source.toString();
+  if (/sb_secret_[A-Za-z0-9_-]{20,}|BEGIN PRIVATE KEY/.test(text))
+    throw Error('Privileged credential content in build');
+  if (!previewBuild && /__XELRA_DEV_SWITCHER__|DEV_ROLE_SWITCHER_MARKER|@xelra\.test/.test(text))
+    throw Error('Unsafe development content in non-preview build');
   total += gzipSync(source).length;
 }
 if (total > 250 * 1024) throw Error(`JavaScript budget exceeded: ${total} bytes gzip`);
@@ -21,4 +26,6 @@ self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.me
  if(e.request.mode==='navigate'){e.respondWith(fetch(e.request).catch(()=>caches.match('/index.html')));return;}
  if(FILES.includes(u.pathname))e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));
 });\n`);
-console.log(`Production JavaScript: ${total} bytes gzip / 256000 budget; development code absent.`);
+console.log(
+  `${previewBuild ? 'Preview' : 'Production'} JavaScript: ${total} bytes gzip / 256000 budget; ${previewBuild ? 'synthetic preview code allowed.' : 'development code absent.'}`,
+);

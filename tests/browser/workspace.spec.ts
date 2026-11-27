@@ -5,13 +5,37 @@ async function loginAs(
   profile = "test-director",
 ) {
   await page.goto("/");
+  await page
+    .getByRole("button", { name: "Authorised access only." })
+    .click({ clickCount: 3 });
   await page.getByLabel("Development profile").selectOption(profile);
   await page.getByRole("button", { name: "Log in" }).click();
 }
 test("development login selects separate synthetic profiles without live auth", async ({
   page,
 }) => {
+  const supabaseRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes(".supabase.co"))
+      supabaseRequests.push(request.url());
+  });
   await page.goto("/");
+  await expect(
+    page.getByRole("button", { name: "Continue with Microsoft" }),
+  ).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  const secretButton = page.getByRole("button", {
+    name: "Authorised access only.",
+  });
+  await secretButton.click();
+  await expect(page.getByLabel("Development profile")).toHaveCount(0);
+  await page.reload();
+  await secretButton.click({ clickCount: 2 });
+  await expect(page.getByLabel("Development profile")).toHaveCount(0);
+  await page.reload();
+  await page.getByRole("button", { name: "Authorised access only." }).click({
+    clickCount: 3,
+  });
   await expect(
     page.getByText(
       "Development-only profile switcher. It uses synthetic local data and does not authenticate with Supabase or access real records.",
@@ -24,10 +48,19 @@ test("development login selects separate synthetic profiles without live auth", 
   await page.getByLabel("Development profile").selectOption("test-staff");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page.locator(".rail-bottom strong")).toHaveText("Sample Staff");
+  expect(supabaseRequests).toEqual([]);
   await expect(
     page.getByRole("button", { name: "Projects", exact: true }),
   ).toHaveCount(0);
   await page.getByRole("button", { name: "Sign out", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Return to sign in" })).toBeVisible();
+  await page.getByRole("button", { name: "Return to sign in" }).click();
+  await expect(
+    page.getByRole("button", { name: "Continue with Microsoft" }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Authorised access only." })
+    .click({ clickCount: 3 });
   await page.getByLabel("Development profile").selectOption("test-director");
   await page.getByRole("button", { name: "Log in" }).click();
   await expect(page.locator(".rail-bottom strong")).toHaveText(
@@ -41,6 +74,9 @@ test("button labels stay legible in disabled, dark, and enlarged-text states", a
   page,
 }) => {
   await page.goto("/");
+  await page
+    .getByRole("button", { name: "Authorised access only." })
+    .click({ clickCount: 3 });
   const login = page.getByRole("button", { name: "Log in" });
   await login.evaluate((button) => button.setAttribute("disabled", ""));
   await expect(login).toBeDisabled();

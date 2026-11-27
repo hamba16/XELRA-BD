@@ -107,6 +107,14 @@ Local provider schema validation does not validate hosted JSON auth settings, ac
 8. For notification delivery supply TENANT_ID, CLIENT_ID, CLIENT_SECRET, MAILBOX and set MAIL_ENABLED=true only after Exchange application access is restricted to the approved mailbox. The five-minute schedule claims leased work, honours 12:30?13:00 recipient quiet time, sends a link only, and retries failures. The monitor runs separately every twelve hours. No Worker was deployed during local integration.
 9. Verify an end-to-end hosted request/approval, external client denial/allow, permitted and denied file fetch, notification failure/retry, backup alert, real encrypted restore, and production-bundle absence of development fixtures before enabling releases.
 
+### Isolated Vercel Preview walkthrough
+
+- Keep the Vercel `Production` environment on `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. In the Vercel `Preview` environment, configure only `VITE_PREVIEW_SUPABASE_URL` and `VITE_PREVIEW_SUPABASE_PUBLISHABLE_KEY` for a separate, disposable Supabase project. Preview builds do not fall back to production variables; without the preview pair, normal sign-in remains unavailable.
+- Apply the migrations to that separate project and use synthetic accounts/data only. Never copy production data, real identities, or service-role keys there. The publishable key is public; do not put any service key in a `VITE_` variable.
+- Scope `VITE_DEV_LOGIN=true` and a synthetic-only `VITE_DEV_PROFILES` JSON array to `Preview`. The preview login page remains the default; triple-clicking “Authorised access only.” reveals the in-memory walkthrough. That path does not authenticate with Supabase or read/write backend records. Enable Vercel Deployment Protection for Preview deployments; the triple-click is a UI affordance, not access control.
+- `VERCEL_ENV` is used as the build-time environment gate. The production build check rejects the switcher and its synthetic markers; preview builds are the only deployed build allowed to include them.
+- Configure and verify these Vercel environment scopes in the dashboard before relying on Preview sign-in. This repository change does not provision a Supabase project, change Vercel settings, or deploy anything.
+
 The legacy Terraform resource address/name `cloudflare_pages_project.standby` is intentionally retained to avoid replacing a previously created project. Its operational role is now primary; `primary_hostname` is the new descriptive output. Netlify retains a custom-domain registration for potential failover, but DNS normally points to Pages. Registration alone does not prove fallback TLS readiness.
 
 The full roadmap and unimplemented business workflows are listed explicitly in `docs/IMPLEMENTATION.md`. No source or local test should be reported as hosted execution.

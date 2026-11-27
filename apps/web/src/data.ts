@@ -105,8 +105,13 @@ export interface Backend {
   rpc(name: string, args: Record<string, unknown>): Promise<unknown>;
   signOut(): Promise<void>;
 }
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const previewDeployment = __XELRA_VERCEL_ENV__ === "preview";
+const url = previewDeployment
+  ? import.meta.env.VITE_PREVIEW_SUPABASE_URL
+  : import.meta.env.VITE_SUPABASE_URL;
+const key = previewDeployment
+  ? import.meta.env.VITE_PREVIEW_SUPABASE_PUBLISHABLE_KEY
+  : import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 export const configured = Boolean(url && key && !url.includes("PROJECT_REF"));
 export const supabase = configured
   ? createClient(url, key, {

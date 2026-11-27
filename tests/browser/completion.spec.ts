@@ -1,7 +1,12 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 async function login(page: import("@playwright/test").Page, profile = "test-director") {
-  await page.goto("/"); await page.getByLabel("Development profile").selectOption(profile); await page.getByRole("button", { name: "Log in", exact: true }).click();
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "Authorised access only." })
+    .click({ clickCount: 3 });
+  await page.getByLabel("Development profile").selectOption(profile);
+  await page.getByRole("button", { name: "Log in", exact: true }).click();
 }
 test("helpdesk discussion and lifecycle preserve drafts and work at a narrow viewport", async ({ page }) => {
   await login(page); await page.getByRole("button", { name: "Helpdesk", exact: true }).click();

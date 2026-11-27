@@ -39,8 +39,13 @@ export default defineConfig({
     url: "http://127.0.0.1:3001",
     reuseExistingServer: true,
     env: {
+      VERCEL_ENV: "preview",
       VITE_DEV_LOGIN: "true",
       VITE_DEV_PROFILES: JSON.stringify(testProfiles),
+      VITE_SUPABASE_URL: "https://production-project.supabase.co",
+      VITE_SUPABASE_PUBLISHABLE_KEY: "test-production-publishable-key",
+      VITE_PREVIEW_SUPABASE_URL: "https://test-project.supabase.co",
+      VITE_PREVIEW_SUPABASE_PUBLISHABLE_KEY: "test-preview-publishable-key",
     },
   },
   reporter: "list",

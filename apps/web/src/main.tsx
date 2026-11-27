@@ -57,8 +57,14 @@ const divisions: Record<Division, string> = {
   COR: "Corporate",
 };
 function App() {
+  const previewDeployment = __XELRA_VERCEL_ENV__ === "preview";
+  const localDevLoginEnabled =
+    import.meta.env.DEV &&
+    !previewDeployment &&
+    import.meta.env.VITE_DEV_LOGIN === "true";
   const devLoginEnabled =
-    import.meta.env.DEV && import.meta.env.VITE_DEV_LOGIN === "true";
+    localDevLoginEnabled ||
+    (previewDeployment && import.meta.env.VITE_DEV_LOGIN === "true");
   const [backend, setBackend] = useState<Backend | null>(null),
     [data, setData] = useState<Snapshot | null>(null),
     [error, setError] = useState(""),
@@ -88,6 +94,8 @@ function App() {
     [authBusy, setAuthBusy] = useState(false);
   const [devProfiles, setDevProfiles] = useState<Profile[]>([]),
     [selectedDevProfile, setSelectedDevProfile] = useState("");
+  const [devSelectorOpen, setDevSelectorOpen] =
+    useState(localDevLoginEnabled);
   const dialog = useRef<HTMLDialogElement>(null);
   const [update, setUpdate] = useState<ServiceWorker | null>(null);
   useEffect(() => {
@@ -123,7 +131,7 @@ function App() {
     }
   }
   useEffect(() => {
-    if (devLoginEnabled || !supabase) return;
+    if (localDevLoginEnabled || !supabase) return;
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setBackend(live);
     });
@@ -132,9 +140,9 @@ function App() {
       if (!session) setData(null);
     });
     return () => sub.subscription.unsubscribe();
-  }, [devLoginEnabled]);
+  }, [localDevLoginEnabled]);
   useEffect(() => {
-    if (!devLoginEnabled) return;
+    if (!devLoginEnabled || !devSelectorOpen) return;
     let active = true;
     void import("./dev/profiles")
       .then(({ loadDevProfiles }) => {
@@ -150,7 +158,7 @@ function App() {
     return () => {
       active = false;
     };
-  }, [devLoginEnabled]);
+  }, [devLoginEnabled, devSelectorOpen]);
   useEffect(() => {
     if (backend) {
       if (location.pathname.startsWith("/auth/")) {
@@ -449,7 +457,7 @@ function App() {
           <p className="muted">
             Your work, decisions and documents in one place.
           </p>
-          {devLoginEnabled ? (
+          {devSelectorOpen && devLoginEnabled ? (
             <>
               <p className="notice">
                 Development-only profile switcher. It uses synthetic local data
@@ -482,6 +490,15 @@ function App() {
               >
                 {authBusy ? "Opening profile…" : "Log in"}
               </button>
+              {previewDeployment && (
+                <button
+                  type="button"
+                  className="preview-button"
+                  onClick={() => setDevSelectorOpen(false)}
+                >
+                  Return to sign in
+                </button>
+              )}
             </>
           ) : configured ? (
             <>
@@ -542,7 +559,7 @@ function App() {
               {error}
             </p>
           )}
-          {!devLoginEnabled && import.meta.env.DEV && !configured && (
+          {localDevLoginEnabled && !configured && (
             <button
               className="preview-button"
               onClick={() => void startDevLogin()}
@@ -553,7 +570,16 @@ function App() {
           <footer>
             XELRA · Dreniak Limited
             <br />
-            Authorised access only.
+            <button
+              type="button"
+              className="preview-profile-trigger"
+              onClick={(event) => {
+                if (previewDeployment && devLoginEnabled && event.detail === 3)
+                  setDevSelectorOpen(true);
+              }}
+            >
+              Authorised access only.
+            </button>
           </footer>
         </section>
       </div>
