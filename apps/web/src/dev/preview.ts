@@ -6,6 +6,7 @@ import type {
   Profile,
   RequestDetail,
 } from "../data";
+import { createWorkflowPreview } from "./workflows";
 export const marker = "__XELRA_DEV_SWITCHER__";
 const defaultProfile: Profile = {
   id: "preview-director",
@@ -24,6 +25,9 @@ const defaultProfile: Profile = {
     "approvals.read",
     "payroll.read",
     "expense.depthead",
+    "projects.manage", "hr.manage", "people.manage", "checklists.manage",
+    "registers.manage", "suppliers.manage", "helpdesk.manage", "audit.read",
+    "finance.read", "finance.manage",
   ],
   divisions: ["ENG", "AMG"],
 };
@@ -157,12 +161,15 @@ export function createPreview(profile: Profile): Backend {
       ],
     });
   const reports = new Map<string, string>();
+  const workflows = createWorkflowPreview(profile, state);
+  const revisionParents = new Map<string, string>();
   return {
     async load() {
       return structuredClone(state);
     },
     async signOut() {},
     async rpc(name, args) {
+      if (workflows.has(name)) return workflows.rpc(name, args);
       if (name === "submit_request") {
         if (profile.principal !== "staff")
           throw Error(
@@ -336,6 +343,8 @@ export function createPreview(profile: Profile): Backend {
           if (document.status !== "in_review")
             throw Error("Only documents in review can be released.");
           document.status = "released";
+          const parent = state.documents.find(d => d.id === revisionParents.get(document.id));
+          if (parent) parent.status = "superseded";
           return "released";
         }
         if (name === "create_document_revision") {
@@ -343,9 +352,9 @@ export function createPreview(profile: Profile): Backend {
             throw Error("You cannot create revisions for this document.");
           if (document.status !== "released")
             throw Error("Only released documents can receive revisions.");
-          document.status = "superseded";
           const revision = document.revision + 1;
           const revisionId = crypto.randomUUID();
+          revisionParents.set(revisionId, document.id);
           state.documents.unshift({
             id: revisionId,
             doc_no: document.doc_no.replace(

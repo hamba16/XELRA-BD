@@ -4,6 +4,8 @@
 
 All 34 files in `files/` are covered by `docs/source/inventory.json`. The ZIP and nested extracted lab match byte for byte. Both PNGs were inspected; the enhanced 1200-pixel root PNG is used by the workspace. The SVG/TS mark retains the supplied geometry. Source text, SQL, TypeScript, Python, tests, workflow, configuration and simulation assumptions were read before integration.
 
+For a module-by-module blueprint inventory, see [BLUEPRINT_STATUS.md](BLUEPRINT_STATUS.md).
+
 The full enhanced blueprint replaces the shorter root blueprint. Earlier documents are archived. Nothing in `files/` was modified. The active lab is `packages/lab/`, with locked dependencies, portable Python commands, corrected dark combined-lens contrast and invalid matching-input handling.
 
 ## Coverage and acceptance

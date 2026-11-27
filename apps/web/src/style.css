@@ -1,6 +1,18 @@
 * {
   box-sizing: border-box;
 }
+.workflow-stack { display: grid; gap: 1.5rem; min-width: 0; }
+.workflow-stack > section, .workflow-stack fieldset { min-width: 0; }
+.workflow-stack fieldset { border: 1px solid var(--hairline); padding: 1rem; }
+.workflow-stack .form-panel { margin: 0; }
+.workflow-stack td { overflow-wrap: anywhere; }
+.workflow-stack .actions { flex-wrap: wrap; }
+.workflow-action { display: inline-flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.workflow-timeline { display: grid; gap: .75rem; padding-left: 1.25rem; }
+.workflow-notifications { padding: 1rem; border: 1px solid var(--hairline); margin-bottom: 1.5rem; }
+.workflow-notifications summary { cursor: pointer; min-height: 44px; }
+.workflow-stack .check-row { display: flex; align-items: center; gap: .75rem; margin: .5rem 0; }
+.workflow-stack .check-row input { width: 1.3rem; min-height: 1.3rem; }
 body {
   margin: 0;
   font-size: 1.05rem;

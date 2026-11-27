@@ -119,7 +119,7 @@ test("document lifecycle: scoped transitions, immutable hash gate and denied rol
     );
     assert.equal(
       await value("select status from docs.files where id=$1", [draft]),
-      "superseded",
+      "released",
     );
     assert.equal(
       await value("select revision from docs.files where id=$1", [revision]),
@@ -134,6 +134,17 @@ test("document lifecycle: scoped transitions, immutable hash gate and denied rol
     );
     assert.equal(detail.document.status, "draft");
     assert.ok(detail.timeline.some((event) => event.action === "document.revision"));
+    assert.match(await value('select doc_no from docs.files where id=$1',[revision]), /RPT-0001-R01$/);
+    await as(director,()=>value('select api.attach_document($1,$2,$3)',[revision,'documents/P014/revision.pdf','b'.repeat(64)]));
+    await as(director,()=>value('select api.submit_document($1)',[revision]));
+    await as(director,()=>assert.rejects(()=>value('select api.release_document($1)',[revision]),/cannot decide/));
+    await db.exec(`insert into rbac.assignments(person_id,role_code,division) values ('${peer}','director_eng','ENG')`);
+    await as(peer,()=>value('select api.release_document($1)',[revision]));
+    assert.equal(await value('select status from docs.files where id=$1',[draft]),'superseded');
+    await as(director,()=>assert.rejects(()=>value('select api.attach_document($1,$2,$3)',[revision,'documents/P014/changed.pdf','c'.repeat(64)]),/Only draft/));
+    await db.exec(`update org.people set status='suspended' where id='${staff}'`);
+    await as(staff,()=>assert.rejects(()=>value('select api.document_detail($1)',[draft]),/not available/));
+    assert.equal(await value('select ok from audit.verify()'),true);
   } finally {
     await db.close();
   }

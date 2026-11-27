@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   LensSwitcher,
@@ -26,6 +26,11 @@ import {
 import "../../../packages/lab/src/ui/tokens.css";
 import "./style.css";
 import { RequestWorkspace, ApprovalHealth } from "./RequestWorkspace";
+import { sendFieldJob } from "./field-attachments";
+const BusinessWorkspace = lazy(() => import("./BusinessWorkspace"));
+const FinanceWorkspace = lazy(() => import("./FinanceWorkspace"));
+const LocalDocumentFile = lazy(() => import("./LocalDocumentFile"));
+const NotificationHistory = lazy(() => import("./BusinessWorkspace").then(m => ({ default: m.NotificationHistory })));
 
 const money = (n: number) =>
   new Intl.NumberFormat("en-UG", {
@@ -59,6 +64,7 @@ function App() {
     [queueOpen, setQueueOpen] = useState(false),
     [syncing, setSyncing] = useState(false),
     [syncError, setSyncError] = useState("");
+  const [capturing, setCapturing] = useState(false);
   const [email, setEmail] = useState(""),
     [code, setCode] = useState(""),
     [sent, setSent] = useState(false),
@@ -174,13 +180,12 @@ function App() {
     () =>
       store && backend
         ? new Outbox(store, async (job) => {
-            const result = await backend.rpc(
-              "sync_field_report",
-              job.payload as Record<string, unknown>,
-            );
-            if (result !== "created" && result !== "duplicate")
-              throw Error("The server did not confirm this report.");
-            return result;
+            const localTransport = backend !== live ? { upload: async (file: import("./local-files").StoredFile) => {
+              const { LocalFileStore } = await import("./local-files");
+              const saved = await new LocalFileStore(data!.profile.id).put(file.id, new File([file.blob], file.name, { type: file.type }));
+              return { key: `photos/local/${file.id}`, sha256: saved.sha256 };
+            }} : null;
+            return sendFieldJob(job, localTransport, args => backend.rpc("sync_field_report", args));
           })
         : null,
     [store, backend],
@@ -235,18 +240,18 @@ function App() {
   const navItems = [
     ["inbox", "Inbox", ""],
     ["projects", "Projects", "projects.read"],
-    ["people", "People", "people.read"],
+    ["people", "People", ""],
     ["documents", "Documents", "documents.read"],
-    ["finance", "Finance", "payroll.read"],
+    ["finance", "Finance", ""],
     ["capture", "Field reports", ""],
     ["help", "Helpdesk", ""],
     ["admin", "Administration", "ops.read"],
   ].filter(
     ([id, , perm]) =>
-      !perm ||
+      (!(id === "finance" || id === "people" || id === "capture") || data?.profile.principal === "staff" || (id === "capture" && data?.profile.principal === "contractor")) && (!perm ||
       can(perm) ||
       (id === "projects" && Boolean(data?.projects.length)) ||
-      (id === "documents" && Boolean(data?.documents.length)),
+      (id === "documents" && Boolean(data?.documents.length))),
   );
   const commands: Command[] = navItems.map(([id, name]) => ({
     id,
@@ -618,11 +623,21 @@ function App() {
   }
   async function capture(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (capturing) return;
     const node = e.currentTarget,
       f = new FormData(node);
     setError("");
+    setCapturing(true);
     try {
       const id = crypto.randomUUID();
+      const files = f.getAll("photos").filter((value): value is File => value instanceof File && value.size > 0);
+      if (files.length > 6) throw Error("Choose at most six photos per field report.");
+      const { compressPhoto, fileDigest } = await import("./local-files");
+      const photos = [];
+      for (const file of files) {
+        const compressed = await compressPhoto(file);
+        photos.push({ id: crypto.randomUUID(), name: compressed.name, type: compressed.type, size: compressed.size, sha256: await fileDigest(compressed), blob: compressed, createdAt: Date.now() });
+      }
       await outbox!.enqueue(
         "field_report",
         {
@@ -630,6 +645,7 @@ function App() {
           p_project: f.get("project"),
           p_body: { note: f.get("note") },
           p_captured: new Date().toISOString(),
+          local_photos: photos,
         },
         id,
       );
@@ -639,7 +655,7 @@ function App() {
       void navigator.storage?.persist();
     } catch (e) {
       setError((e as Error).message);
-    }
+    } finally { setCapturing(false); }
   }
   const selection = (
     <label>
@@ -698,7 +714,7 @@ function App() {
       </aside>
       <div className="workspace">
         <header className="topbar">
-          <LensSwitcher value={lens} onChange={setLens} canSee={canSee} />
+          {data.profile.principal === "staff" || data.profile.principal === "it_admin" ? <LensSwitcher value={lens} onChange={setLens} canSee={canSee} /> : <strong>{data.profile.principal === "client" ? "Your projects" : data.profile.principal === "contractor" ? "Your engagements" : "Audit workspace"}</strong>}
           <div className="top-actions">
             <button className="search-command" onClick={() => setPalette(true)}>
               Find or do something <kbd>Ctrl K</kbd>
@@ -751,11 +767,6 @@ function App() {
               </p>
             </div>
             <div className="actions">
-              {page === "help" && (
-                <button className="primary" onClick={() => setForm("helpdesk")}>
-                  Ask IT for help
-                </button>
-              )}
               <button onClick={() => void refresh()} disabled={loading}>
                 Refresh
               </button>
@@ -910,6 +921,7 @@ function App() {
           )}
           {page === "inbox" && (
             <>
+              <Suspense fallback={<p>Loading notifications…</p>}><NotificationHistory backend={backend} /></Suspense>
               <section className="summary">
                 <div className="summary-card">
                   <span className="summary-icon" aria-hidden="true">▦</span>
@@ -1038,51 +1050,7 @@ function App() {
               />
             </>
           )}
-          {page === "projects" && (
-            <div className="project-grid">
-              {projects.map((p) => (
-                <article className="project" key={p.code}>
-                  <p className="eyebrow">
-                    {p.code} · {divisions[p.division]}
-                  </p>
-                  <h2>{p.title}</h2>
-                  <div className="progress-label">
-                    <span>Recorded progress</span>
-                    <strong>{p.progress}%</strong>
-                  </div>
-                  <progress value={p.progress} max={100} />
-                  <dl>
-                    <div>
-                      <dt>Budget</dt>
-                      <dd>{money(p.budget_ugx)}</dd>
-                    </div>
-                    <div>
-                      <dt>Actual cost</dt>
-                      <dd>{money(p.actual_ugx)}</dd>
-                    </div>
-                  </dl>
-                  <Status
-                    value={
-                      p.budget_ugx === 0
-                        ? "budget not set"
-                        : (p.actual_ugx / p.budget_ugx) * 100 <= p.progress + 5
-                          ? "on track"
-                          : (p.actual_ugx / p.budget_ugx) * 100 <=
-                              p.progress + 15
-                            ? "watch"
-                            : "needs attention"
-                    }
-                  />
-                </article>
-              ))}
-              {!projects.length && (
-                <Empty
-                  title="No projects in this view."
-                  text="Your project lead can assign you to a project."
-                />
-              )}
-            </div>
-          )}
+          {page === "projects" && <Suspense fallback={<p>Loading workspace?</p>}><BusinessWorkspace mode="projects" backend={backend} data={data} onChanged={() => void refresh()} /></Suspense>}
           {page === "documents" && (
             <>
               {can("documents.create") && (
@@ -1205,7 +1173,7 @@ function App() {
                         </td>
                         <td>
                           <div className="action-stack">
-                            {d.status === "released" && (
+                            {d.status === "released" && !preview && (
                               <button
                                 onClick={() =>
                                   void downloadFile(d.id).catch((e) =>
@@ -1216,29 +1184,10 @@ function App() {
                                 Download
                               </button>
                             )}
+                            {preview && d.can_manage && <Suspense fallback={<span>Loading file controls?</span>}><LocalDocumentFile backend={backend} profile={data.profile} document={d} onSaved={() => void refresh()} /></Suspense>}
+                            {!preview && d.can_manage && d.status === "draft" && !d.has_file && <small>File upload is not configured for this workspace.</small>}
                             {d.can_manage && d.status === "draft" && (
                               <>
-                                <button
-                                  onClick={async () => {
-                                    if (!backend) return;
-                                    const key = window.prompt("Private R2 object key");
-                                    const sha = window.prompt("SHA-256 checksum");
-                                    if (!key || !sha) return;
-                                    try {
-                                      await backend.rpc("attach_document", {
-                                        p_id: d.id,
-                                        p_object_key: key,
-                                        p_sha256: sha,
-                                      });
-                                      setMessage("Document file attached.");
-                                      await refresh(backend);
-                                    } catch (e) {
-                                      setError((e as Error).message);
-                                    }
-                                  }}
-                                >
-                                  Attach file
-                                </button>
                                 <button
                                   onClick={async () => {
                                     if (!backend) return;
@@ -1328,35 +1277,7 @@ function App() {
               </div>
             </>
           )}
-          {page === "people" && (
-            <div
-              className="table-wrap"
-              tabIndex={0}
-              role="region"
-              aria-label="Scrollable records"
-            >
-              <table>
-                <thead>
-                  <tr>
-                    <th>Person</th>
-                    <th>Profile</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.people.map((p) => (
-                    <tr key={p.id}>
-                      <td>{p.full_name}</td>
-                      <td>{label(p.principal)}</td>
-                      <td>
-                        <Status value={p.status} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          {page === "people" && <Suspense fallback={<p>Loading workspace?</p>}><BusinessWorkspace mode="people" backend={backend} data={data} onChanged={() => void refresh()} /></Suspense>}
           {page === "capture" && (
             <section className="form-panel">
               <h2>New site note</h2>
@@ -1376,8 +1297,10 @@ function App() {
                     What happened on site?
                     <textarea name="note" required maxLength={12000} rows={6} />
                   </label>
+                  <label>Site photos (optional, up to six)<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple /></label>
+                  {!preview && <small>Photos remain on this device until photo delivery is available.</small>}
                   <div className="actions">
-                    <button className="primary">Save on this device</button>
+                    <button className="primary" disabled={capturing}>{capturing ? "Saving photos and report?" : "Save on this device"}</button>
                     <button
                       type="button"
                       disabled={!queueCount || syncing}
@@ -1399,69 +1322,9 @@ function App() {
               )}
             </section>
           )}
-          {page === "finance" && (
-            <>
-              <section className="notice">
-                <strong>Payroll verification gate</strong>
-                <p>
-                  Statutory rates must be verified by Finance before payroll can
-                  run. No rate table is seeded as verified.
-                </p>
-              </section>
-              <Reconciliation />
-            </>
-          )}
-          {page === "help" && (
-            <>
-              <div className="section-heading">
-                <h2>Requests and registers</h2>
-                {can("records.create") && (
-                  <button onClick={() => setForm("register")}>
-                    Add register entry
-                  </button>
-                )}
-              </div>
-              <div
-                className="table-wrap"
-                tabIndex={0}
-                role="region"
-                aria-label="Scrollable records"
-              >
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Register</th>
-                      <th>Status</th>
-                      <th>Expiry</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.records.filter(inLens).map((r) => (
-                      <tr key={r.id}>
-                        <td>
-                          <strong>{r.title}</strong>
-                          <small>{r.data.description}</small>
-                        </td>
-                        <td>{label(r.module)}</td>
-                        <td>
-                          <Status value={r.status} />
-                        </td>
-                        <td>{r.expires_on || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {!data.records.length && (
-                  <Empty
-                    title="No requests recorded."
-                    text="Describe the issue and the IT team can help."
-                  />
-                )}
-              </div>
-            </>
-          )}
-          {page === "admin" && can("ops.read") && <Health backend={backend} />}
+          {page === "finance" && <Suspense fallback={<p>Loading workspace?</p>}><FinanceWorkspace backend={backend} data={data} /></Suspense>}
+          {page === "help" && <Suspense fallback={<p>Loading workspace?</p>}><BusinessWorkspace mode="help" backend={backend} data={data} onChanged={() => void refresh()} /></Suspense>}
+          {page === "admin" && can("ops.read") && <><Health backend={backend} /><Suspense fallback={<p>Loading audit verification?</p>}><BusinessWorkspace mode="admin" backend={backend} data={data} onChanged={() => void refresh()} /></Suspense></>}
           {![
             "inbox",
             "projects",

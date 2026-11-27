@@ -142,7 +142,7 @@ export const live: Backend = {
         .limit(50),
       supabase!
         .from("documents")
-        .select("id,doc_no,title,division,project,revision,status")
+        .select("id,doc_no,title,division,project,revision,status,can_manage,can_release,has_file")
         .order("created_at", { ascending: false })
         .limit(50),
       supabase!
@@ -160,14 +160,7 @@ export const live: Backend = {
       profile,
       requests: await checked(requests),
       projects: await checked(projects),
-      documents: ((await checked(documents)) as DocumentRow[]).map((document) => ({
-        ...document,
-        can_manage:
-          profile.permissions.includes("documents.manage") ||
-          document.status === "draft",
-        can_release: profile.permissions.includes("documents.release"),
-        has_file: false,
-      })),
+      documents: (await checked(documents)) as DocumentRow[],
       people: await checked(people),
       records: await checked(records),
     };
