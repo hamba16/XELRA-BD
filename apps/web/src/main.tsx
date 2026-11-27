@@ -11,26 +11,37 @@ import {
 } from "../../../packages/lab/src/ui/ApprovalCard";
 import { rank, type Command } from "../../../packages/lab/src/ui/commands";
 import { Outbox } from "../../../packages/lab/src/lib/offline-queue";
-import { reconcile, type Line } from "../../../packages/lab/src/lib/recon";
 import { BrowserStore } from "./queue";
 import {
   configured,
   live,
   supabase,
   downloadFile,
+  getProfileImageUrl,
   type Backend,
   type Snapshot,
   type Division,
   type Profile,
 } from "./data";
+import { writeWorkspacePreferences, readWorkspacePreferences, type WorkspacePreferences } from "./workspace-preferences";
 import "../../../packages/lab/src/ui/tokens.css";
 import "./style.css";
+import "./workspace-theme.css";
+import {
+  RevisionOutline,
+  SidebarDrafting,
+  WorkspaceIcon,
+} from "./WorkspaceMotifs";
 import { RequestWorkspace, ApprovalHealth } from "./RequestWorkspace";
 import { sendFieldJob } from "./field-attachments";
+import { LocalFileStore, compressPhoto, fileDigest, type StoredFile } from "./local-files";
 const BusinessWorkspace = lazy(() => import("./BusinessWorkspace"));
 const FinanceWorkspace = lazy(() => import("./FinanceWorkspace"));
+const SettingsWorkspace = lazy(() => import("./WorkspaceSettings"));
 const LocalDocumentFile = lazy(() => import("./LocalDocumentFile"));
+const DocumentHistory = lazy(() => import("./DocumentHistory"));
 const NotificationHistory = lazy(() => import("./BusinessWorkspace").then(m => ({ default: m.NotificationHistory })));
+const OperationalOverview = lazy(() => import("./BusinessWorkspace").then(m => ({ default: m.OperationalOverview })));
 
 const money = (n: number) =>
   new Intl.NumberFormat("en-UG", {
@@ -59,12 +70,18 @@ function App() {
     [palette, setPalette] = useState(false),
     [query, setQuery] = useState(""),
     [message, setMessage] = useState(""),
-    [theme, setTheme] = useState("light");
+    [theme, setTheme] = useState<"light" | "dark">("light");
+  const [financeChartStyle, setFinanceChartStyle] = useState<WorkspacePreferences["financeChartStyle"]>("columns");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarStatus, setAvatarStatus] = useState("");
+  const [settingsStatus, setSettingsStatus] = useState("");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [queueCount, setQueueCount] = useState(0),
     [queueOpen, setQueueOpen] = useState(false),
     [syncing, setSyncing] = useState(false),
     [syncError, setSyncError] = useState("");
   const [capturing, setCapturing] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState("");
   const [email, setEmail] = useState(""),
     [code, setCode] = useState(""),
     [sent, setSent] = useState(false),
@@ -159,6 +176,10 @@ function App() {
   };
   useEffect(() => {
     if (!data) return;
+    if (location.pathname === "/") {
+      const home = data.profile.principal === "it_admin" ? "admin" : ["client", "contractor", "auditor"].includes(data.profile.principal) ? "projects" : "inbox";
+      if (home !== "inbox") { history.replaceState({}, "", `/${home}`); setPage(home); }
+    }
     setLens(
       canSee.eng && canSee.amg
         ? "combined"
@@ -172,6 +193,36 @@ function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+  useEffect(() => {
+    if (!data) return;
+    try {
+      const preferences = readWorkspacePreferences(data.profile.id);
+      setTheme(preferences.theme);
+      setFinanceChartStyle(preferences.financeChartStyle);
+      setSettingsStatus("");
+    } catch (e) {
+      setTheme("light");
+      setFinanceChartStyle("columns");
+      setSettingsStatus((e as Error).message);
+    }
+  }, [data?.profile.id]);
+  useEffect(() => {
+    let active = true;
+    if (!backend || backend !== live || !data?.profile.id) {
+      setAvatarUrl("");
+      setAvatarStatus("");
+      return () => { active = false; };
+    }
+    void getProfileImageUrl(data.profile.id).then(url => {
+      if (active) {
+        setAvatarUrl(url || "");
+        setAvatarStatus("");
+      }
+    }).catch(e => {
+      if (active) setAvatarStatus(`Profile photo unavailable: ${(e as Error).message}`);
+    });
+    return () => { active = false; };
+  }, [backend, data?.profile.id]);
   const store = useMemo(
     () => (data ? new BrowserStore(data.profile.id) : null),
     [data?.profile.id],
@@ -180,8 +231,7 @@ function App() {
     () =>
       store && backend
         ? new Outbox(store, async (job) => {
-            const localTransport = backend !== live ? { upload: async (file: import("./local-files").StoredFile) => {
-              const { LocalFileStore } = await import("./local-files");
+            const localTransport = backend !== live ? { upload: async (file: StoredFile) => {
               const saved = await new LocalFileStore(data!.profile.id).put(file.id, new File([file.blob], file.name, { type: file.type }));
               return { key: `photos/local/${file.id}`, sha256: saved.sha256 };
             }} : null;
@@ -232,10 +282,22 @@ function App() {
   }, [backend]);
   function nav(next: string) {
     setPage(next);
+    setSelectedDocument("");
     setForm("");
     setSearch("");
     setPalette(false);
     history.pushState({}, "", `/${next}`);
+  }
+  function savePreferences(preferences: WorkspacePreferences) {
+    if (!data) return;
+    try {
+      writeWorkspacePreferences(data.profile.id, preferences);
+      setTheme(preferences.theme);
+      setFinanceChartStyle(preferences.financeChartStyle);
+      setSettingsStatus("Preferences saved for this profile on this browser.");
+    } catch {
+      setSettingsStatus("Preferences could not be saved in this browser. Check available storage and try again.");
+    }
   }
   const navItems = [
     ["inbox", "Inbox", ""],
@@ -243,6 +305,7 @@ function App() {
     ["people", "People", ""],
     ["documents", "Documents", "documents.read"],
     ["finance", "Finance", ""],
+    ["settings", "Settings", ""],
     ["capture", "Field reports", ""],
     ["help", "Helpdesk", ""],
     ["admin", "Administration", "ops.read"],
@@ -523,6 +586,7 @@ function App() {
         people: "People",
         documents: "Document centre",
         finance: "Finance",
+        settings: "Settings",
         capture: "Field reports",
         help: "Helpdesk",
         admin: "Administration",
@@ -632,7 +696,6 @@ function App() {
       const id = crypto.randomUUID();
       const files = f.getAll("photos").filter((value): value is File => value instanceof File && value.size > 0);
       if (files.length > 6) throw Error("Choose at most six photos per field report.");
-      const { compressPhoto, fileDigest } = await import("./local-files");
       const photos = [];
       for (const file of files) {
         const compressed = await compressPhoto(file);
@@ -670,46 +733,111 @@ function App() {
     </label>
   );
   return (
-    <div className="app">
+    <div className={`app${sidebarCollapsed ? " sidebar-collapsed" : ""}${page === "settings" ? " settings-page" : ""}`}>
       <a className="skip" href="#main">
         Skip to content
       </a>
       <aside className="rail">
-        <button className="brand-link" onClick={() => nav("inbox")}>
-          <SplitMark lens={lens} canSee={canSee} size={44} />
-          <span>
-            XELRA<small>DRENIAK</small>
-          </span>
-        </button>
+        <SidebarDrafting />
+        <div className="rail-brand-row">
+          <button className="brand-link" onClick={() => nav("inbox")}>
+            <span className="brand-mark">
+              <SplitMark lens={lens} canSee={canSee} size={44} />
+            </span>
+            <span className="brand-name">
+              XELRA<small>DRENIAK</small>
+            </span>
+          </button>
+          <button
+            className="rail-toggle"
+            type="button"
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!sidebarCollapsed}
+            aria-controls="primary-navigation"
+            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+          >
+            <svg
+              className="rail-toggle-icon"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d="m15 5-7 7 7 7" />
+            </svg>
+          </button>
+        </div>
         <p className="rail-label">WORKSPACE</p>
-        <nav>
-          {navItems.map(([id, name], i) => (
+        <nav id="primary-navigation">
+          {navItems.map(([id, name]) => (
             <button
               key={id}
               aria-current={page === id ? "page" : undefined}
+              title={sidebarCollapsed ? name : undefined}
               onClick={() => nav(id)}
             >
               <span className="nav-symbol" aria-hidden="true">
-                {["◫", "▤", "♙", "▧", "≋", "⊕", "?"][i]}
+                <WorkspaceIcon name={id} />
               </span>
-              {name}
+              <span className="nav-label">{name}</span>
               {id === "inbox" && pending.length > 0 && (
                 <span className="count">{pending.length}</span>
               )}
+              <RevisionOutline />
             </button>
           ))}
         </nav>
         <div className="rail-bottom">
-          <span className="avatar">
-            {data.profile.name
-              .split(" ")
-              .map((s) => s[0])
-              .slice(0, 2)
-              .join("")}
-          </span>
-          <strong>{data.profile.name}</strong>
-          <small>{label(data.profile.principal)}</small>
-          <button onClick={() => void signOut()}>Sign out</button>
+          <div className="rail-profile">
+            <span className="avatar" aria-hidden="true">
+              {avatarUrl ? <img src={avatarUrl} alt="" /> : <svg
+                className="profile-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                focusable="false"
+              >
+                <circle cx="12" cy="8" r="3.25" />
+                <path d="M5 20v-1.25a7 7 0 0 1 14 0V20" />
+              </svg>}
+            </span>
+            <strong className="rail-profile-name">{data.profile.name}</strong>
+            <small className="rail-profile-role">{label(data.profile.principal)}</small>
+          </div>
+          <div className="rail-account-actions">
+            <span className="rail-account-divider" aria-hidden="true" />
+            <button
+              onClick={() => void signOut()}
+              title={sidebarCollapsed ? "Sign out" : undefined}
+            >
+              <span className="sign-out-label">Sign out</span>
+              <svg
+                className="sign-out-icon"
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path d="M10 17l5-5-5-5M15 12H3" />
+                <path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7" />
+              </svg>
+            </button>
+          </div>
         </div>
       </aside>
       <div className="workspace">
@@ -733,22 +861,27 @@ function App() {
             </button>
             <button
               aria-label={`Use ${theme === "light" ? "dark" : "light"} theme`}
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              onClick={() => savePreferences({ theme: theme === "light" ? "dark" : "light", financeChartStyle })}
             >
               {theme === "light" ? "◐" : "◑"}
             </button>
           </div>
         </header>
-        <main id="main" tabIndex={-1}>
-          <div className={`page-heading${page === "inbox" ? " dashboard-hero" : ""}`}>
-            {page === "inbox" && (
+        <main
+          id="main"
+          className={page === "inbox" ? "dashboard-page" : undefined}
+          tabIndex={-1}
+        >
+          {page === "inbox" && (
+            <div className="dashboard-background" aria-hidden="true">
               <img
-                className="dashboard-hero-image"
+                className="dashboard-background-image"
                 src="/ag-rosa-render.webp"
                 alt=""
-                aria-hidden="true"
               />
-            )}
+            </div>
+          )}
+          <div className={`page-heading${page === "inbox" ? " dashboard-hero" : ""}`}>
             <div className="page-heading-copy">
               <p className="eyebrow">
                 {lens === "combined"
@@ -763,7 +896,9 @@ function App() {
                   ? "Decisions, people and progress. Start with what needs you."
                   : page === "capture"
                     ? "Record the work where it happens. Send it when you have signal."
-                    : "A shared view of the work you can access."}
+                    : page === "settings"
+                      ? "Make your workspace feel right for the way you work."
+                      : "A shared view of the work you can access."}
               </p>
             </div>
             <div className="actions">
@@ -922,6 +1057,7 @@ function App() {
           {page === "inbox" && (
             <>
               <Suspense fallback={<p>Loading notifications…</p>}><NotificationHistory backend={backend} /></Suspense>
+              <Suspense fallback={<p>Loading overview…</p>}><OperationalOverview backend={backend} /></Suspense>
               <section className="summary">
                 <div className="summary-card">
                   <span className="summary-icon" aria-hidden="true">▦</span>
@@ -1173,6 +1309,7 @@ function App() {
                         </td>
                         <td>
                           <div className="action-stack">
+                            <button onClick={() => setSelectedDocument(d.id)}>View history</button>
                             {d.status === "released" && !preview && (
                               <button
                                 onClick={() =>
@@ -1275,6 +1412,7 @@ function App() {
                   />
                 )}
               </div>
+              {selectedDocument && <Suspense fallback={<p>Loading document details…</p>}><DocumentHistory key={selectedDocument} backend={backend} profile={data.profile} id={selectedDocument} onChanged={() => void refresh()} onClose={() => setSelectedDocument("")} /></Suspense>}
             </>
           )}
           {page === "people" && <Suspense fallback={<p>Loading workspace?</p>}><BusinessWorkspace mode="people" backend={backend} data={data} onChanged={() => void refresh()} /></Suspense>}
@@ -1322,7 +1460,22 @@ function App() {
               )}
             </section>
           )}
-          {page === "finance" && <Suspense fallback={<p>Loading workspace?</p>}><FinanceWorkspace backend={backend} data={data} /></Suspense>}
+          {page === "finance" && <Suspense fallback={<p>Loading finance workspace…</p>}><FinanceWorkspace backend={backend} data={data} chartStyle={financeChartStyle} /></Suspense>}
+          {page === "settings" && <Suspense fallback={<p>Loading settings…</p>}>
+            <SettingsWorkspace
+              profile={data.profile}
+              preferences={{ theme, financeChartStyle }}
+              avatarUrl={avatarUrl}
+              avatarStatus={avatarStatus}
+              canUploadAvatar={backend === live && configured && !preview}
+              onPreferencesChange={savePreferences}
+              onAvatarChange={setAvatarUrl}
+              onAvatarStatus={setAvatarStatus}
+              onBack={() => nav("inbox")}
+              onSignOut={() => void signOut()}
+            />
+            {settingsStatus && <p role="status" className={settingsStatus.includes("could not") || settingsStatus.includes("invalid") ? "notice error" : "muted"}>{settingsStatus}</p>}
+          </Suspense>}
           {page === "help" && <Suspense fallback={<p>Loading workspace?</p>}><BusinessWorkspace mode="help" backend={backend} data={data} onChanged={() => void refresh()} /></Suspense>}
           {page === "admin" && can("ops.read") && <><Health backend={backend} /><Suspense fallback={<p>Loading audit verification?</p>}><BusinessWorkspace mode="admin" backend={backend} data={data} onChanged={() => void refresh()} /></Suspense></>}
           {![
@@ -1331,6 +1484,7 @@ function App() {
             "people",
             "documents",
             "finance",
+            "settings",
             "capture",
             "help",
             "admin",
@@ -1345,20 +1499,28 @@ function App() {
           </footer>
         </main>
         <nav className="mobile-nav">
-          <button
-            aria-current={page === "inbox" ? "page" : undefined}
-            onClick={() => nav("inbox")}
-          >
-            Inbox
-          </button>
-          <button
-            aria-current={page === "capture" ? "page" : undefined}
-            onClick={() => nav("capture")}
-          >
-            Capture
-          </button>
-          <button onClick={() => setPalette(true)}>Find</button>
-          <button onClick={() => void signOut()}>Sign out</button>
+          {page === "settings" ? <>
+            <button onClick={() => nav("inbox")}><WorkspaceIcon name="inbox" /><span>Home</span></button>
+            <button onClick={() => nav(data.profile.principal === "staff" ? "finance" : "projects")}><WorkspaceIcon name={data.profile.principal === "staff" ? "finance" : "projects"} /><span>{data.profile.principal === "staff" ? "Finance" : "Projects"}</span></button>
+            <button onClick={() => setPalette(true)}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 5 5" /></svg><span>Find</span></button>
+            <button aria-current="page" onClick={() => nav("settings")}><WorkspaceIcon name="settings" /><span>Profile</span></button>
+          </> : <>
+            <button
+              aria-current={page === "inbox" ? "page" : undefined}
+              onClick={() => nav("inbox")}
+            >
+              Inbox
+            </button>
+            {(data.profile.principal === "staff" || data.profile.principal === "contractor") ? <button
+              aria-current={page === "capture" ? "page" : undefined}
+              onClick={() => nav("capture")}
+            >
+              Capture
+            </button> : <button onClick={() => nav("projects")}>Projects</button>}
+            <button onClick={() => setPalette(true)}>Find</button>
+            <button aria-current={page === "settings" ? "page" : undefined} onClick={() => nav("settings")}>Settings</button>
+            <button onClick={() => void signOut()}>Sign out</button>
+          </>}
         </nav>
       </div>
       <dialog
@@ -1504,108 +1666,6 @@ function DraftForm({
         {saved}
       </p>
     </form>
-  );
-}
-function Reconciliation() {
-  const [bank, setBank] = useState(""),
-    [ledger, setLedger] = useState(""),
-    [output, setOutput] = useState<ReturnType<typeof reconcile> | null>(null),
-    [error, setError] = useState("");
-  const parse = (text: string): Line[] =>
-    text
-      .trim()
-      .split("\n")
-      .filter(Boolean)
-      .map((row, i) => {
-        const [id, date, amount, ...description] = row.split("\t");
-        if (
-          !id ||
-          !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
-          !Number.isFinite(Date.parse(date)) ||
-          !Number.isFinite(Number(amount)) ||
-          !description.length
-        )
-          throw Error(
-            `Line ${i + 1}: use ID, date (YYYY-MM-DD), signed UGX amount and description, separated by tabs.`,
-          );
-        return {
-          id,
-          date,
-          amount: Number(amount),
-          text: description.join(" "),
-        };
-      });
-  return (
-    <section className="form-panel">
-      <h2>Bank reconciliation · shadow mode</h2>
-      <p>
-        Paste statement and ledger rows from your spreadsheet. Suggestions stay
-        on this device and do not post to the ledger.
-      </p>
-      <div className="form-grid">
-        <label>
-          Bank rows
-          <textarea
-            value={bank}
-            onChange={(e) => setBank(e.target.value)}
-            rows={7}
-            placeholder="ID → date → signed UGX → description"
-          />
-        </label>
-        <label>
-          Ledger rows
-          <textarea
-            value={ledger}
-            onChange={(e) => setLedger(e.target.value)}
-            rows={7}
-          />
-        </label>
-      </div>
-      <button
-        className="primary"
-        onClick={() => {
-          try {
-            const b = parse(bank),
-              l = parse(ledger);
-            if (b.length > 500 || l.length > 500)
-              throw Error("Match up to 500 rows at a time.");
-            if (
-              new Set(b.map((x) => x.id)).size !== b.length ||
-              new Set(l.map((x) => x.id)).size !== l.length
-            )
-              throw Error("Each row needs a unique ID.");
-            setOutput(reconcile(b, l));
-            setError("");
-          } catch (e) {
-            setError((e as Error).message);
-            setOutput(null);
-          }
-        }}
-      >
-        Find suggestions
-      </button>
-      {error && <p role="alert">{error}</p>}
-      {output && (
-        <div aria-live="polite">
-          <p>
-            {output.auto.length} strong suggestions · {output.suggest.length}{" "}
-            need review · {output.unmatched.length} unmatched
-          </p>
-          <ul>
-            {output.auto.map(([b, l]) => (
-              <li key={b}>
-                {b} → {l} · review before posting
-              </li>
-            ))}
-            {output.suggest.map((s) => (
-              <li key={s.bank}>
-                {s.bank} · candidates {s.options.map(([id]) => id).join(", ")}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </section>
   );
 }
 createRoot(document.getElementById("root")!).render(<App />);

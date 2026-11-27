@@ -58,7 +58,7 @@ export function generate(directory, env = process.env) {
     visit(parse(html, { sourceCodeLocationInfo: true }));
   }
   const csp = ["default-src 'self'", `script-src 'self' ${[...hashes].sort().join(' ')}`,
-    "style-src 'self' 'unsafe-inline'", `img-src 'self' data: blob: ${files}`,
+    "style-src 'self' 'unsafe-inline'", `img-src 'self' data: blob: ${files} ${supabase}`,
     "font-src 'self'", `connect-src 'self' ${supabase} ${supabase.replace('https:', 'wss:')} ${files}`,
     "worker-src 'self'", "manifest-src 'self'", "frame-ancestors 'none'", "base-uri 'none'",
     "form-action 'self'", "object-src 'none'"].join('; ');

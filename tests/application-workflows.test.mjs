@@ -123,9 +123,12 @@ test('finance: exact lines, receipt gate, spending ladder, balanced journals, im
   await db.query('update payroll.rate_tables set verified_at=now(),verified_by=$1',[id(6)]);
   await as(id(6),()=>value("select api.save_payroll_line($1,$2,1000000,10000,'Synthetic deduction',890000)",[period,id(2)]));
   const payrollApproval=await as(id(6),()=>value('select api.submit_payroll_period($1)',[period]));
+  assert.equal((await as(id(7),()=>value('select api.payroll_workspace()'))).lines.length,1,'current HR reviewer can inspect inputs');
+  assert.equal((await as(id(8),()=>value('select api.payroll_workspace()'))).lines.length,0,'future department step cannot inspect yet');
   await as(id(6),()=>assert.rejects(()=>value('select api.lock_payroll_period($1)',[period]),/HR and department/));
   await as(id(6),()=>assert.rejects(()=>value("select api.save_payroll_line($1,$2,2000000,0,'Changed')",[period,id(2)]),/not open/));
   await as(id(7),()=>value('select api.decide_request($1,true)',[payrollApproval]));
+  assert.equal((await as(id(8),()=>value('select api.payroll_workspace()'))).lines.length,1,'current department reviewer can inspect inputs');
   await as(id(8),()=>value('select api.decide_request($1,true)',[payrollApproval]));
   await as(id(6),()=>value('select api.lock_payroll_period($1)',[period]));
   const payslips=await as(id(2),()=>value('select api.payroll_workspace()'));

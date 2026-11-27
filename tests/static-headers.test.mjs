@@ -20,6 +20,7 @@ test('hashes exact script bytes, ignores comments, handles quoted greater-than',
   const headers = readFileSync(join(dir, '_headers'), 'utf8');
   assert.ok(headers.includes(createHash('sha256').update(code).digest('base64')));
   assert.ok(headers.includes("frame-ancestors 'none'"));
+  assert.ok(headers.includes("img-src 'self' data: blob: https://abc.r2.cloudflarestorage.com https://testref.supabase.co"));
   assert.ok(!headers.includes('unsafe-eval'));
   assert.ok(!headers.split('\n/*.html')[0].includes('Cache-Control'));
   assert.ok(headers.includes('/release.txt\n  Cache-Control: no-store'));

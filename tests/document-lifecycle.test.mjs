@@ -145,6 +145,10 @@ test("document lifecycle: scoped transitions, immutable hash gate and denied rol
     await db.exec(`update org.people set status='suspended' where id='${staff}'`);
     await as(staff,()=>assert.rejects(()=>value('select api.document_detail($1)',[draft]),/not available/));
     assert.equal(await value('select ok from audit.verify()'),true);
+    const later = await as(director,()=>value('select api.create_document_revision($1)',[revision]));
+    await as(director,()=>value('select api.withdraw_document($1)',[later]));
+    const retry = await as(director,()=>value('select api.create_document_revision($1)',[revision]));
+    assert.match(await value('select doc_no from docs.files where id=$1',[retry]),/R03$/,'withdrawn R02 is never reused');
   } finally {
     await db.close();
   }

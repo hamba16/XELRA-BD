@@ -163,6 +163,8 @@ export function createPreview(profile: Profile): Backend {
   const reports = new Map<string, string>();
   const workflows = createWorkflowPreview(profile, state);
   const revisionParents = new Map<string, string>();
+  const documentEvents = new Map<string, { at: string; actor: string; action: string }[]>();
+  const logDocument = (id: string, action: string) => documentEvents.set(id, [...(documentEvents.get(id) || []), { at: new Date().toISOString(), actor: profile.name, action }]);
   return {
     async load() {
       return structuredClone(state);
@@ -170,6 +172,17 @@ export function createPreview(profile: Profile): Backend {
     async signOut() {},
     async rpc(name, args) {
       if (workflows.has(name)) return workflows.rpc(name, args);
+      if (["document_detail", "acknowledge_document", "return_document"].includes(name)) {
+        const document = state.documents.find(d => d.id === args.p_id);
+        if (!document) throw Error("This document is not available.");
+        if (name === "document_detail") return structuredClone({ document, timeline: documentEvents.get(document.id) || [] });
+        if (name === "acknowledge_document") {
+          if (document.status !== "released" || !String(args.p_name || "").trim()) throw Error("A released document and your typed name are required.");
+          logDocument(document.id, "document.acknowledged"); return "acknowledged";
+        }
+        if (!profile.permissions.includes("documents.release") || document.status !== "in_review" || !String(args.p_reason || "").trim()) throw Error("A document in review and a reason are required.");
+        document.status = "draft"; logDocument(document.id, "document.changes_requested"); return "draft";
+      }
       if (name === "submit_request") {
         if (profile.principal !== "staff")
           throw Error(
@@ -329,12 +342,14 @@ export function createPreview(profile: Profile): Backend {
           if (!profile.permissions.includes("documents.manage"))
             throw Error("You cannot attach a file to this document.");
           document.has_file = true;
+          logDocument(document.id, "document.attached");
           return "attached";
         }
         if (name === "submit_document") {
           if (document.status !== "draft" || !document.has_file)
             throw Error("Attach the file before submitting it.");
           document.status = "in_review";
+          logDocument(document.id, "document.submit");
           return "in_review";
         }
         if (name === "release_document") {
@@ -343,6 +358,7 @@ export function createPreview(profile: Profile): Backend {
           if (document.status !== "in_review")
             throw Error("Only documents in review can be released.");
           document.status = "released";
+          logDocument(document.id, "document.release");
           const parent = state.documents.find(d => d.id === revisionParents.get(document.id));
           if (parent) parent.status = "superseded";
           return "released";
@@ -355,6 +371,7 @@ export function createPreview(profile: Profile): Backend {
           const revision = document.revision + 1;
           const revisionId = crypto.randomUUID();
           revisionParents.set(revisionId, document.id);
+          logDocument(revisionId, "document.revision");
           state.documents.unshift({
             id: revisionId,
             doc_no: document.doc_no.replace(

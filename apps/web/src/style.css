@@ -29,8 +29,12 @@ button {
   background: var(--surface);
   color: var(--text);
   padding: 0.65rem 1rem;
+  min-width: 0;
+  max-width: 100%;
   min-height: 44px;
   border-radius: 2px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
   transition:
     background-color var(--d1) var(--ease),
     border-color var(--d1) var(--ease),
@@ -50,7 +54,7 @@ button:disabled {
   background: var(--paper);
   border-color: var(--hairline);
   color: var(--text-muted);
-  opacity: 0.75;
+  opacity: 1;
   cursor: not-allowed;
 }
 button.primary,
@@ -336,10 +340,11 @@ footer {
   display: flex;
   gap: 0.7rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 .top-actions button {
   font-size: 0.75rem;
-  white-space: nowrap;
+  white-space: normal;
 }
 .search-command {
   border: 1px solid var(--hairline) !important;
@@ -406,31 +411,6 @@ main {
   border: 1px solid var(--hairline);
   border-radius: var(--corner-d);
   background: var(--surface);
-}
-.dashboard-hero::before {
-  position: absolute;
-  z-index: 1;
-  inset: 0;
-  content: "";
-  background:
-    linear-gradient(
-      90deg,
-      var(--surface) 0%,
-      color-mix(in srgb, var(--surface) 82%, transparent) 38%,
-      transparent 100%
-    ),
-    linear-gradient(0deg, var(--surface) 0%, transparent 58%);
-  pointer-events: none;
-}
-.dashboard-hero-image {
-  position: absolute;
-  z-index: 0;
-  inset: 0 0 0 auto;
-  width: 58%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 27%;
-  opacity: 0.28;
 }
 .dashboard-hero .page-heading-copy,
 .dashboard-hero > .actions {
@@ -865,21 +845,6 @@ dialog::backdrop {
   .dashboard-hero {
     min-height: 240px;
     padding: 1.5rem 1.25rem;
-  }
-  .dashboard-hero-image {
-    width: 82%;
-    object-position: center 24%;
-    opacity: 0.2;
-  }
-  .dashboard-hero::before {
-    background:
-      linear-gradient(
-        90deg,
-        var(--surface) 0%,
-        color-mix(in srgb, var(--surface) 82%, transparent) 55%,
-        transparent 100%
-      ),
-      linear-gradient(0deg, var(--surface) 0%, transparent 65%);
   }
   .page-heading > .actions {
     margin-top: 1rem;

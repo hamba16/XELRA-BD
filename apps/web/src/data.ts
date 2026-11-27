@@ -119,6 +119,42 @@ export const supabase = configured
       },
     })
   : null;
+const profileImageBucket = "xelra-profile-images";
+function profileImagePath(profileId: string): string {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(profileId))
+    throw Error("A valid signed-in profile is required for profile images.");
+  return `${profileId}/avatar.jpg`;
+}
+function requireSupabase() {
+  if (!supabase) throw Error("Profile image storage is not configured.");
+  return supabase;
+}
+export async function getProfileImageUrl(profileId: string): Promise<string | null> {
+  const client = requireSupabase(), path = profileImagePath(profileId);
+  const { data: files, error } = await client.storage.from(profileImageBucket).list(profileId, { limit: 1, search: "avatar.jpg" });
+  if (error) throw Error(error.message);
+  if (!files.some(file => file.name === "avatar.jpg")) return null;
+  const { data, error: signedUrlError } = await client.storage.from(profileImageBucket).createSignedUrl(path, 60 * 60 * 24);
+  if (signedUrlError) throw Error(signedUrlError.message);
+  return data.signedUrl;
+}
+export async function uploadProfileImage(profileId: string, image: Blob): Promise<string> {
+  if (image.type !== "image/jpeg" || image.size === 0 || image.size > 256 * 1024)
+    throw Error("Profile photos must be prepared as JPEG images up to 256 KB.");
+  const client = requireSupabase(), path = profileImagePath(profileId);
+  const { error } = await client.storage.from(profileImageBucket).upload(path, image, {
+    cacheControl: "3600", contentType: "image/jpeg", upsert: true,
+  });
+  if (error) throw Error(error.message);
+  const url = await getProfileImageUrl(profileId);
+  if (!url) throw Error("The uploaded profile photo could not be verified.");
+  return url;
+}
+export async function removeProfileImage(profileId: string): Promise<void> {
+  const client = requireSupabase(), path = profileImagePath(profileId);
+  const { error } = await client.storage.from(profileImageBucket).remove([path]);
+  if (error) throw Error(error.message);
+}
 async function checked<T>(result: {
   data: T;
   error: { message: string } | null;

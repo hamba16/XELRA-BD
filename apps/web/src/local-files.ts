@@ -41,9 +41,20 @@ export class LocalFileStore implements FileStore {
   async put(id: string, file: File): Promise<StoredFile> {
     await validateFile(file);
     const record: StoredFile = { id, name: file.name, type: file.type, size: file.size, sha256: await fileDigest(file), blob: file, createdAt: Date.now() };
-    const previous = await this.get(id);
-    if (previous && previous.sha256 !== record.sha256) throw Error("This local file identifier has different content. The original was kept.");
-    await this.run("readwrite", store => store.put(record));
+    let conflict = false;
+    try {
+      await this.run("readwrite", store => {
+        const request = store.get(id);
+        request.onsuccess = () => {
+          if (request.result && (request.result as StoredFile).sha256 !== record.sha256) { conflict = true; store.transaction.abort(); }
+          else store.put(record);
+        };
+        return request;
+      });
+    } catch (e) {
+      if (conflict) throw Error("This local file identifier has different content. The original was kept.");
+      throw e;
+    }
     const saved = await this.get(id);
     if (!saved || saved.sha256 !== record.sha256) throw Error("Local file verification failed. Keep the original file.");
     return saved;
