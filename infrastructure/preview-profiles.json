@@ -1,0 +1,65 @@
+[
+  {
+    "id": "preview-central-director",
+    "name": "Sample Central Director",
+    "principal": "staff",
+    "permissions": ["projects.read", "documents.read", "people.read", "approvals.read", "view.combined", "leave.read", "leave.approve", "expense.approve.central", "expense.depthead", "generic.approve", "records.read", "records.create", "payroll.read"],
+    "divisions": ["ENG", "AMG", "COR"]
+  },
+  {
+    "id": "preview-engineering-director",
+    "name": "Sample Engineering Director",
+    "principal": "staff",
+    "permissions": ["projects.read", "documents.read", "approvals.read", "leave.read", "leave.approve", "expense.depthead"],
+    "divisions": ["ENG"]
+  },
+  {
+    "id": "preview-staff",
+    "name": "Sample Staff",
+    "principal": "staff",
+    "permissions": ["leave.read"],
+    "divisions": ["ENG"]
+  },
+  {
+    "id": "preview-finance-manager",
+    "name": "Sample Finance Manager",
+    "principal": "staff",
+    "permissions": ["pay.read", "payroll.read", "expense.approve.fm", "records.read", "records.create"],
+    "divisions": ["COR"]
+  },
+  {
+    "id": "preview-finance-officer",
+    "name": "Sample Finance Officer",
+    "principal": "staff",
+    "permissions": ["expense.review"],
+    "divisions": ["COR"]
+  },
+  {
+    "id": "preview-it-admin",
+    "name": "Sample IT Administrator",
+    "principal": "it_admin",
+    "permissions": ["rbac.grant", "attendance.export", "ops.read"],
+    "divisions": ["COR"]
+  },
+  {
+    "id": "preview-client",
+    "name": "Sample Client",
+    "principal": "client",
+    "permissions": [],
+    "divisions": ["ENG"]
+  },
+  {
+    "id": "preview-contractor",
+    "name": "Sample Contractor",
+    "principal": "contractor",
+    "permissions": [],
+    "divisions": ["ENG"]
+  },
+  {
+    "id": "preview-auditor",
+    "name": "Sample Auditor",
+    "principal": "auditor",
+    "permissions": [],
+    "divisions": ["COR"]
+  }
+]
