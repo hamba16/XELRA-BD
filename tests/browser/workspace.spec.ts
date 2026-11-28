@@ -460,6 +460,49 @@ test("mobile and dark themes fit narrow viewports", async ({ page }) => {
   ).toBe(true);
 });
 
+test("shared workspace design preserves readable metadata, mobile focus and form reflow", async ({ page }) => {
+  await loginAs(page);
+  const navigate = async (name: string) => {
+    await page.getByRole("button", { name: /Find or do something|^Find$/ }).click();
+    await page.getByLabel("Find a page or action").fill(name);
+    await page.getByRole("dialog").getByRole("button", { name: `${name} Go to`, exact: true }).click();
+  };
+  for (const theme of ["light", "dark"]) {
+    await page.locator("body").evaluate((body, value) => body.setAttribute("data-theme", value), theme);
+    await page.setViewportSize({ width: 320, height: 740 });
+    await navigate("Settings");
+    const shortcuts = page.getByRole("navigation", { name: "Settings shortcuts" });
+    const first = shortcuts.getByRole("link").first();
+    await first.focus();
+    await page.keyboard.press("Tab");
+    const focused = page.locator(":focus");
+    await expect(focused).toHaveCSS("outline-style", "solid");
+    await expect(focused).toHaveCSS("outline-width", "2px");
+    const sizes = await shortcuts.locator("small").evaluateAll(elements => elements.map(element => parseFloat(getComputedStyle(element).fontSize)));
+    expect(sizes.length).toBeGreaterThan(0);
+    expect(Math.min(...sizes)).toBeGreaterThanOrEqual(12);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: `.validation/ui-settings-${theme}.png`, fullPage: true });
+    await navigate("Finance");
+    await page.getByRole("button", { name: "Records", exact: true }).click();
+    const title = page.getByLabel("Title", { exact: true });
+    await title.fill("Design reflow draft");
+    await page.evaluate(() => { document.documentElement.style.fontSize = "200%"; });
+    const overflow = await page.locator("main *").evaluateAll(elements => elements.filter(element => {
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.right > innerWidth + 1 && !element.closest(".table-wrap");
+    }).map(element => `${element.tagName}.${element.className}: ${Math.round(element.getBoundingClientRect().right)}`));
+    expect(overflow).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(title).toHaveValue("Design reflow draft");
+    await page.evaluate(() => { document.documentElement.style.fontSize = ""; });
+    const axe = await new AxeBuilder({ page }).analyze();
+    expect(axe.violations.filter(v => ["critical", "serious"].includes(v.impact || ""))).toEqual([]);
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.screenshot({ path: ".validation/ui-finance-records.png", fullPage: true });
+});
+
 test("requester can inspect, cancel a withdrawal, withdraw and restore saved history filters", async ({
   page,
 }) => {

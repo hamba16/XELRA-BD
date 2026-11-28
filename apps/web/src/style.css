@@ -15,7 +15,7 @@
 .workflow-stack .check-row input { width: 1.3rem; min-height: 1.3rem; }
 body {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--t-17);
 }
 button,
 input,
@@ -93,7 +93,7 @@ textarea {
 label {
   display: grid;
   gap: 0.5rem;
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   font-weight: 500;
 }
 form {
@@ -101,28 +101,28 @@ form {
   gap: 1.25rem;
 }
 h1 {
-  font-size: 2.61rem;
+  font-size: var(--t-42);
   margin: 0.25rem 0 1rem;
 }
 h2 {
-  font-size: 1.51rem;
+  font-size: var(--t-24);
   margin: 0;
 }
 h3 {
-  font-size: 1.26rem;
+  font-size: var(--t-20);
 }
 p {
   line-height: 1.6;
 }
 small {
-  font-size: 0.875rem;
+  font-size: var(--t-14);
 }
 .muted,
 small {
   color: var(--text-muted);
 }
 .eyebrow {
-  font-size: 0.75rem;
+  font-size: var(--t-12);
   letter-spacing: 0.13em;
   font-weight: 600;
   color: var(--lens-text);
@@ -168,7 +168,7 @@ small {
   display: block;
   font-weight: 600;
   letter-spacing: 0.15em;
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   margin-bottom: 4rem;
 }
 .wordmark span {
@@ -176,7 +176,7 @@ small {
   margin: 0 0.4rem;
 }
 .signin-form h2 {
-  font-size: 2.18rem;
+  font-size: var(--t-35);
 }
 .signin-form .muted {
   margin-bottom: 2rem;
@@ -186,7 +186,7 @@ small {
   align-items: center;
   gap: 1rem;
   color: var(--text-muted);
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   margin: 1.5rem 0;
 }
 .divider:before,
@@ -197,7 +197,7 @@ small {
   flex: 1;
 }
 footer {
-  font-size: 0.75rem;
+  font-size: var(--t-12);
   line-height: 1.8;
   color: var(--text-muted);
   margin-top: 3rem;
@@ -224,7 +224,7 @@ footer {
   padding: 1rem 1.25rem;
   background: var(--lens-soft);
   border: 1px solid var(--hairline);
-  font-size: 0.875rem;
+  font-size: var(--t-14);
 }
 .notice button {
   float: right;
@@ -258,7 +258,7 @@ footer {
   text-align: left;
   margin: 0 0 3rem;
   padding: 0.5rem;
-  font-size: 1.26rem;
+  font-size: var(--t-20);
   font-weight: 600;
   letter-spacing: 0.08em;
 }
@@ -285,7 +285,7 @@ footer {
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   min-height: 48px;
   border-radius: var(--r-1);
 }
@@ -302,7 +302,7 @@ footer {
 }
 .count {
   margin-left: auto;
-  font-size: 0.75rem;
+  font-size: var(--t-12);
 }
 .rail-bottom {
   margin-top: auto;
@@ -313,7 +313,7 @@ footer {
   border-top: 1px solid var(--hairline);
 }
 .rail-bottom strong {
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   align-self: center;
 }
 .rail-bottom small {
@@ -326,7 +326,7 @@ footer {
   text-align: left;
   padding: 0;
   min-height: 32px;
-  font-size: 0.75rem;
+  font-size: var(--t-12);
 }
 .avatar {
   grid-row: span 2;
@@ -335,7 +335,7 @@ footer {
   height: 36px;
   display: grid;
   place-items: center;
-  font-size: 0.875rem;
+  font-size: var(--t-14);
 }
 .workspace {
   margin-left: 232px;
@@ -358,7 +358,7 @@ footer {
   flex-wrap: wrap;
 }
 .top-actions button {
-  font-size: 0.75rem;
+  font-size: var(--t-12);
   white-space: normal;
 }
 .search-command {
@@ -415,7 +415,7 @@ main {
   margin: 0.4rem 0;
 }
 .page-heading .muted {
-  font-size: 0.875rem;
+  font-size: var(--t-14);
 }
 .dashboard-hero {
   position: relative;
@@ -445,7 +445,7 @@ main {
   flex-shrink: 0;
 }
 .preview-strip {
-  font-size: 0.75rem;
+  font-size: var(--t-12);
   padding: 0.5rem 0;
   color: var(--text-muted);
   border-bottom: 1px solid var(--hairline);
@@ -483,11 +483,11 @@ main {
   min-width: 0;
 }
 .summary-card p {
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   margin: 0 0 0.4rem;
 }
 .summary-card strong {
-  font-size: 2.18rem;
+  font-size: var(--t-35);
   font-weight: 500;
   display: block;
   line-height: 1.1;
@@ -495,7 +495,7 @@ main {
 .summary-card small {
   display: block;
   margin-top: 0.55rem;
-  font-size: 0.75rem;
+  font-size: var(--t-12);
 }
 .dashboard-quick-actions {
   margin: 2rem 0 2.5rem;
@@ -545,11 +545,11 @@ main {
   gap: 0.25rem;
 }
 .quick-action strong {
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   font-weight: 600;
 }
 .quick-action small {
-  font-size: 0.75rem;
+  font-size: var(--t-12);
   line-height: 1.35;
 }
 .section-heading {
@@ -560,12 +560,12 @@ main {
   gap: 1rem;
 }
 .section-heading h2 span {
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   color: var(--text-muted);
   margin-left: 0.7rem;
 }
 .section-heading > span {
-  font-size: 0.75rem;
+  font-size: var(--t-12);
 }
 .approval-list {
   display: grid;
@@ -590,7 +590,7 @@ main {
 .empty p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.875rem;
+  font-size: var(--t-14);
 }
 .table-wrap {
   overflow: auto;
@@ -600,11 +600,11 @@ main {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   text-align: left;
 }
 th {
-  font-size: 0.75rem;
+  font-size: var(--t-12);
   font-weight: 500;
   color: var(--text-muted);
   background: var(--paper);
@@ -622,7 +622,7 @@ td strong {
 td small {
   display: block;
   margin-top: 0.4rem;
-  font-size: 0.75rem;
+  font-size: var(--t-12);
 }
 tr:last-child td {
   border: 0;
@@ -631,7 +631,7 @@ tr:last-child td {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.75rem;
+  font-size: var(--t-12);
   color: var(--warn);
   white-space: nowrap;
 }
@@ -649,7 +649,7 @@ tr:last-child td {
   margin-bottom: 1.5rem;
 }
 .form-panel p {
-  font-size: 0.875rem;
+  font-size: var(--t-14);
 }
 .form-grid {
   display: grid;
@@ -684,7 +684,7 @@ tr:last-child td {
 .progress-label {
   display: flex;
   justify-content: space-between;
-  font-size: 0.875rem;
+  font-size: var(--t-14);
 }
 progress {
   accent-color: var(--lens);
@@ -698,12 +698,12 @@ dl {
   margin: 1rem 0 2rem;
 }
 dt {
-  font-size: 0.75rem;
+  font-size: var(--t-12);
   color: var(--text-muted);
 }
 dd {
   margin: 0.5rem 0 0;
-  font-size: 0.875rem;
+  font-size: var(--t-14);
 }
 .filter {
   max-width: 460px;
@@ -711,7 +711,7 @@ dd {
 }
 .code {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: var(--t-12);
   border: 0;
   background: transparent;
   padding: 0;
@@ -750,7 +750,7 @@ dialog::backdrop {
   border-radius: var(--r-1);
 }
 .palette small {
-  font-size: 0.75rem;
+  font-size: var(--t-12);
 }
 .skip {
   position: absolute;
@@ -803,7 +803,7 @@ dialog::backdrop {
     align-items: flex-start;
   }
   .page-heading h1 {
-    font-size: 2.18rem;
+    font-size: var(--t-35);
   }
 }
 @media (max-width: 760px) {
@@ -814,7 +814,7 @@ dialog::backdrop {
     padding: 2.5rem 7vw;
   }
   .brand-panel h1 {
-    font-size: 2.61rem;
+    font-size: var(--t-42);
   }
   .brand-panel img {
     display: none;
@@ -842,7 +842,7 @@ dialog::backdrop {
   }
   .topbar [role="radio"] {
     padding: 6px 8px !important;
-    font-size: 0.75rem !important;
+    font-size: var(--t-12) !important;
   }
   .top-actions {
     width: 100%;
@@ -879,10 +879,10 @@ dialog::backdrop {
     font-size: 1.1rem;
   }
   .summary-card p {
-    font-size: 0.75rem;
+    font-size: var(--t-12);
   }
   .summary-card strong {
-    font-size: 1.81rem;
+    font-size: var(--t-29);
   }
   .summary-card small {
     line-height: 1.35;
@@ -918,7 +918,7 @@ dialog::backdrop {
   .approval-list article header strong {
     width: 100%;
     padding-left: 40px;
-    font-size: 1.26rem !important;
+    font-size: var(--t-20) !important;
   }
   .approval-list article > div {
     flex-wrap: wrap;
@@ -953,7 +953,7 @@ dialog::backdrop {
     border: 0;
     background: transparent;
     border-radius: var(--r-1);
-    font-size: 0.875rem;
+    font-size: var(--t-14);
   }
   .mobile-nav button[aria-current="page"] {
     background: var(--lens-soft);
@@ -1047,7 +1047,7 @@ dialog::backdrop {
   justify-content: space-between;
   gap: 0.5rem;
   margin-top: 1rem;
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   flex-wrap: wrap;
 }
 .request-state {
@@ -1076,7 +1076,7 @@ dialog::backdrop {
 }
 .request-detail p,
 .request-detail li {
-  font-size: 0.875rem;
+  font-size: var(--t-14);
   line-height: 1.6;
 }
 .request-description,
@@ -1128,7 +1128,7 @@ dialog::backdrop {
     padding: 1rem;
   }
   .request-pagination button {
-    font-size: 0.75rem;
+    font-size: var(--t-12);
   }
   .request-filters label {
     min-width: 130px;
